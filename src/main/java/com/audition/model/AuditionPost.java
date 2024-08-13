@@ -1,5 +1,6 @@
 package com.audition.model;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,4 +13,6 @@ public class AuditionPost {
     private String title;
     private String body;
 
+    // Add comments field
+    private List<Comment> comments;
 }

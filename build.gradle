@@ -6,9 +6,9 @@ plugins {
     id 'jacoco'
     id "com.github.spotbugs" version "5.0.14"
     id "io.freefair.lombok" version "8.0.1"
-    // TODO Enable checkstyle and PMD. Fix all the relevant issues.
-    //id "checkstyle"
-    //id "pmd"
+    //Enable checkstyle and PMD. Fix all the relevant issues.
+    id "checkstyle"
+    id "pmd"
 }
 
 group = 'com.audition'
@@ -17,8 +17,8 @@ sourceCompatibility = '17'
 targetCompatibility = '17'
 
 
-// TODO allow for code-analysis.gradle to be applied for code analysis.
-// apply from: 'config/code-analysis.gradle'
+//allow for code-analysis.gradle to be applied for code analysis.
+apply from: 'config/code-analysis.gradle'
 
 configurations {
     compileOnly {
@@ -35,35 +35,42 @@ ext {
     set('logbackVersion', "1.4.5")
     set('slf4jVersion', "2.0.5")
     set('springdocVersion', "2.0.2")
+    set('openTelemetryVersion', "1.25.0")
 }
 
 dependencies {
 
-    // TODO Clean up unused dependencies. Add comments on consideration on any improvements you made.
+    //Clean up unused dependencies. Add comments on consideration on any improvements you made.
+    //use micrometer for metrics, otel for tracing
     implementation "org.springframework.boot:spring-boot-starter-actuator"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "org.springframework.boot:spring-boot-starter-web"
     implementation "org.springframework.cloud:spring-cloud-starter-config"
-    implementation "org.springframework.boot:spring-boot-starter-webflux"
     implementation "org.springframework.boot:spring-boot-starter-aop"
-    implementation "io.micrometer:micrometer-tracing-bridge-brave"
-    implementation "io.micrometer:micrometer-tracing"
+    //implementation "io.micrometer:micrometer-tracing-bridge-brave"
+    //implementation "io.micrometer:micrometer-tracing"
+    //implementation "io.micrometer:context-propagation"
     implementation "io.micrometer:micrometer-registry-prometheus"
-    implementation "io.micrometer:context-propagation"
-    implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j"
-    implementation "org.springframework.cloud:spring-cloud-starter-config"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
-
-    developmentOnly "org.springframework.boot:spring-boot-devtools"
     runtimeOnly "io.micrometer:micrometer-registry-prometheus"
 
+    developmentOnly "org.springframework.boot:spring-boot-devtools"
+
+    //implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.6.0"
+    // OpenTelemetry API
+    implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
+    // OpenTelemetry SDK
+    implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
+    // OpenTelemetry Context
+    implementation "io.opentelemetry:opentelemetry-context:${openTelemetryVersion}"
+    // Add exporter
+    implementation "io.opentelemetry:opentelemetry-exporter-jaeger:${openTelemetryVersion}"
 
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     implementation "ch.qos.logback:logback-core:${logbackVersion}"
     implementation "ch.qos.logback:logback-classic:${logbackVersion}"
 
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+
     testImplementation "org.springframework.boot:spring-boot-starter-test"
-    testImplementation "io.projectreactor:reactor-test"
 }
 
 dependencyManagement {

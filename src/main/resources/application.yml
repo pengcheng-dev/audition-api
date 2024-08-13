@@ -10,19 +10,35 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   mvc:
     throw-exception-if-no-handler-found: true
-  sleuth:
-    sampler:
-      probability: 1.0
 server:
   max-http-request-header-size: 16KB
 management:
   tracing:
+    enabled: true
     sampling:
-      probability: 1.0
+      probability: 1.0  # Ensure full sampling if desired
   endpoints:
     web:
       exposure:
-        include: '*' #TODO enable only info and health for security purposes. Consider that we may want to still access other actuator endpoints securely.
+        include: "info,health,prometheus"
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    metrics:
+      enabled: true
+otel:
+  traces:
+    exporter: jaeger
+    service:
+      name: audition-api
+    jaeger:
+      endpoint: http://localhost:14250
+
+
 logging:
   pattern:
     level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    io.opentelemetry: INFO

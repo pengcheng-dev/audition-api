@@ -6,6 +6,7 @@ import static org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
 import com.audition.common.exception.SystemException;
 import com.audition.common.logging.AuditionLogger;
 import io.micrometer.common.util.StringUtils;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     public static final String DEFAULT_TITLE = "API Error Occurred";
     private static final Logger LOG = LoggerFactory.getLogger(ExceptionControllerAdvice.class);
     private static final String ERROR_MESSAGE = " Error Code from Exception could not be mapped to a valid HttpStatus Code - ";
@@ -31,25 +35,58 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(HttpClientErrorException.class)
     ProblemDetail handleHttpClientException(final HttpClientErrorException e) {
-        return createProblemDetail(e, e.getStatusCode());
+        ProblemDetail problemDetail =  createProblemDetail(e, e.getStatusCode());
 
+        logger.logStandardProblemDetail(LOG, problemDetail, e);
+
+        return problemDetail;
     }
 
 
+    /**
+     * Global handel exception type of Exception
+     * @param e Exception
+     * @return ProblemDetail
+     */
     @ExceptionHandler(Exception.class)
     ProblemDetail handleMainException(final Exception e) {
-        // TODO Add handling for Exception
-        final HttpStatusCode status = getHttpStatusCodeFromException(e);
-        return createProblemDetail(e, status);
+        // Log the exception
+        logger.logErrorWithException(LOG, "An unexpected error occurred: " + e.getMessage(), e);
 
+        // Increment a custom metric for exceptions
+        meterRegistry.counter("exceptions.main", "exception", e.getClass().getSimpleName()).increment();
+
+        final HttpStatusCode status = getHttpStatusCodeFromException(e);
+        ProblemDetail problemDetail = createProblemDetail(e, status);
+
+        problemDetail.setTitle("An unexpected error occurred");
+        problemDetail.setDetail(e.getMessage());
+
+        return problemDetail;
     }
 
+    /**
+     * Global handel exception type of SystemException
+     * @param e SystemException
+     * @return ProblemDetail
+     */
     @ExceptionHandler(SystemException.class)
     ProblemDetail handleSystemException(final SystemException e) {
-        // TODO `Add Handling for SystemException
-        final HttpStatusCode status = getHttpStatusCodeFromSystemException(e);
-        return createProblemDetail(e, status);
+        //Add Handling for SystemException
 
+        // Log the exception
+        logger.logErrorWithException(LOG, "A system error occurred: " + e.getMessage(), e);
+
+        // Increment a custom metric for system exceptions
+        meterRegistry.counter("exceptions.system", "exception", e.getClass().getSimpleName()).increment();
+
+        // Customize the ProblemDetail response
+        final HttpStatusCode status = getHttpStatusCodeFromSystemException(e);
+        ProblemDetail problemDetail = createProblemDetail(e, status);
+
+        problemDetail.setTitle("System Error");
+        problemDetail.setDetail(e.getDetail());
+        return problemDetail;
     }
 
 
