@@ -7,80 +7,113 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
+import java.lang.reflect.Field;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
 class ResponseMetricsInjectorTest {
 
-    @MockBean
     private MeterRegistry meterRegistry;
-
-    @Autowired
+    private Counter totalRequestsCounter;
+    private Counter errorCounter;
+    private Timer.Sample timerSample;
+    private HttpServletRequest request;
+    private HttpServletResponse response;
     private ResponseMetricsInjector responseMetricsInjector;
 
-    private Counter mockTotalRequestsCounter;
-    private Counter mockErrorCounter;
-    private Timer mockTimer;
-    private HttpServletRequest mockRequest;
-    private HttpServletResponse mockResponse;
-
     @BeforeEach
-    void setUp() {
-        mockTotalRequestsCounter = Mockito.mock(Counter.class);
-        mockErrorCounter = Mockito.mock(Counter.class);
-        mockTimer = Mockito.mock(Timer.class);
-        mockRequest = Mockito.mock(HttpServletRequest.class);
-        mockResponse = Mockito.mock(HttpServletResponse.class);
+    void setUp() throws Exception {
+        meterRegistry = Mockito.mock(MeterRegistry.class);
+        totalRequestsCounter = Mockito.mock(Counter.class);
+        errorCounter = Mockito.mock(Counter.class);
+        timerSample = Mockito.mock(Timer.Sample.class);
+        request = Mockito.mock(HttpServletRequest.class);
+        response = Mockito.mock(HttpServletResponse.class);
 
-        when(meterRegistry.counter("http.server.requests.total")).thenReturn(mockTotalRequestsCounter);
-        when(meterRegistry.counter("http.server.requests.errors")).thenReturn(mockErrorCounter);
+        // Create an instance of ResponseMetricsInjector
+        responseMetricsInjector = new ResponseMetricsInjector(meterRegistry);
+
+        // Use reflection to inject the mocked Counters into the private fields
+        setPrivateField(responseMetricsInjector, "totalRequestsCounter", totalRequestsCounter);
+        setPrivateField(responseMetricsInjector, "errorCounter", errorCounter);
+    }
+
+    private void setPrivateField(Object target, String fieldName, Object value) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(target, value);
     }
 
     @Test
     void testPreHandle() {
-        responseMetricsInjector.preHandle(mockRequest, mockResponse, new Object());
+        try (MockedStatic<Timer> mockedTimer = mockStatic(Timer.class)) {
+            // Mock the static Timer.start method
+            mockedTimer.when(() -> Timer.start(meterRegistry)).thenReturn(timerSample);
 
-        verify(mockTotalRequestsCounter, times(1)).increment();
-        verify(mockRequest, times(1)).setAttribute(eq("timerSample"), any(Timer.Sample.class));
+            boolean result = responseMetricsInjector.preHandle(request, response, null);
+
+            // Verify that Timer.start(meterRegistry) was called
+            mockedTimer.verify(() -> Timer.start(eq(meterRegistry)));
+
+            // Verify that the timer sample was stored in the request attribute
+            verify(request).setAttribute(eq("timerSample"), eq(timerSample));
+
+            // Verify that the totalRequestsCounter was incremented
+            verify(totalRequestsCounter).increment();
+
+            assertTrue(result);
+        }
     }
 
     @Test
-    void testAfterCompletion() {
-        Timer.Sample mockSample = Timer.start(meterRegistry);
-        when(mockRequest.getAttribute("timerSample")).thenReturn(mockSample);
-        when(mockResponse.getStatus()).thenReturn(200);
+    void testAfterCompletion_Success() {
+        // Setup request and response
+        when(request.getAttribute("timerSample")).thenReturn(timerSample);
+        when(response.getStatus()).thenReturn(200);
 
-        responseMetricsInjector.afterCompletion(mockRequest, mockResponse, new Object(), null);
+        try (MockedStatic<Timer> mockedTimer = mockStatic(Timer.class)) {
+            Timer.Builder timerBuilder = mock(Timer.Builder.class);
+            when(Timer.builder("http.server.requests")).thenReturn(timerBuilder);
+            when(timerBuilder.tag(anyString(), anyString())).thenReturn(timerBuilder);
+            when(timerBuilder.description(anyString())).thenReturn(timerBuilder);
+            when(timerBuilder.register(meterRegistry)).thenReturn(mock(Timer.class));
 
-        verify(mockSample, times(1)).stop(any(Timer.class));
-        verify(mockErrorCounter, never()).increment();
+            responseMetricsInjector.afterCompletion(request, response, null, null);
+
+            // Verify that the timer sample was stopped
+            verify(timerSample).stop(any(Timer.class));
+
+            // Verify that errorCounter was not incremented since there was no error
+            verify(errorCounter, never()).increment();
+        }
     }
 
     @Test
-    void testAfterCompletionWithErrorStatus() {
-        Timer.Sample mockSample = Timer.start(meterRegistry);
-        when(mockRequest.getAttribute("timerSample")).thenReturn(mockSample);
-        when(mockResponse.getStatus()).thenReturn(500);
+    void testAfterCompletion_Error() {
+        // Setup request and response
+        when(request.getAttribute("timerSample")).thenReturn(timerSample);
+        when(response.getStatus()).thenReturn(500);
 
-        responseMetricsInjector.afterCompletion(mockRequest, mockResponse, new Object(), null);
+        try (MockedStatic<Timer> mockedTimer = mockStatic(Timer.class)) {
+            Timer.Builder timerBuilder = mock(Timer.Builder.class);
+            when(Timer.builder("http.server.requests")).thenReturn(timerBuilder);
+            when(timerBuilder.tag(anyString(), anyString())).thenReturn(timerBuilder);
+            when(timerBuilder.description(anyString())).thenReturn(timerBuilder);
+            when(timerBuilder.register(meterRegistry)).thenReturn(mock(Timer.class));
 
-        verify(mockSample, times(1)).stop(any(Timer.class));
-        verify(mockErrorCounter, times(1)).increment();
-    }
+            responseMetricsInjector.afterCompletion(request, response, null, new Exception("Test Exception"));
 
-    @Test
-    void testAfterCompletionWithException() {
-        Timer.Sample mockSample = Timer.start(meterRegistry);
-        when(mockRequest.getAttribute("timerSample")).thenReturn(mockSample);
+            // Verify that the timer sample was stopped
+            verify(timerSample).stop(any(Timer.class));
 
-        responseMetricsInjector.afterCompletion(mockRequest, mockResponse, new Object(), new RuntimeException("Test Exception"));
-
-        verify(mockSample, times(1)).stop(any(Timer.class));
-        verify(mockErrorCounter, times(1)).increment();
+            // Verify that the errorCounter was incremented
+            verify(errorCounter).increment();
+        }
     }
 }

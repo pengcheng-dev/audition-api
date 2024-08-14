@@ -26,12 +26,13 @@ class AuditionServiceTest {
 
     @BeforeEach
     void setUp() {
-        List<AuditionPost> mockPosts = List.of(new AuditionPost());
-        Mockito.when(auditionIntegrationClient.getPosts()).thenReturn(mockPosts);
     }
 
     @Test
     void testGetPosts() {
+        List<AuditionPost> mockPosts = List.of(new AuditionPost());
+        Mockito.when(auditionIntegrationClient.getPosts()).thenReturn(mockPosts);
+
         List<AuditionPost> posts = auditionService.getPosts();
         assertNotNull(posts);
         assertEquals(1, posts.size());
