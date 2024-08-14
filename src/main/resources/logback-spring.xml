@@ -29,6 +29,19 @@
         <pattern>
           <pattern>
             {
+            "timestamp": "%date",
+            "severity": "%level",
+            "service": "${springAppName:-}",
+            "trace": "%X{trace_id:-}",
+            "span": "%X{span_id:-}",
+            "pid": "${PID:-}",
+            "thread": "%thread",
+            "logger": "%logger{40}",
+            "message": "%message"
+            }
+          </pattern>
+          <!--pattern>
+            {
             "severity": "%level",
             "service": "${springAppName:-}",
             "trace": "%X{X-B3-TraceId:-}",
@@ -40,7 +53,8 @@
             "class": "%logger{40}",
             "rest": "%message"
             }
-          </pattern>
+          </pattern-->
+
         </pattern>
         <timestamp>
           <timeZone>UTC</timeZone>
@@ -58,8 +72,10 @@
   <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
   <!-- Appender to log to console -->
+  <!--property name="CONSOLE_LOG_PATTERN"
+    value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(-){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/-->
   <property name="CONSOLE_LOG_PATTERN"
-    value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+    value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} [trace-id=%X{trace_id}] [span-id=%X{span_id}] %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 
   <!-- Appender to log to file -->
   <property name="LOG_FILE" value="${BUILD_FOLDER:-build}/${springAppName}"/>

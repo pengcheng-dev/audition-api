@@ -20,7 +20,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "info,health,prometheus"
+        include: "info,health"
   metrics:
     export:
       prometheus:
@@ -30,15 +30,19 @@ management:
       enabled: true
 otel:
   traces:
-    exporter: jaeger
-    service:
-      name: audition-api
-    jaeger:
-      endpoint: http://localhost:14250
-
-
+    exporter:
+      otlp:
+        endpoint: "http://localhost:4317"  # Change this to your OTLP endpoint
+  metrics:
+    exporter:
+      otlp:
+        endpoint: "http://localhost:4318"  # Change this to your OTLP endpoint
+  logs:
+    exporter:
+      console:
+        enabled: true
 logging:
   pattern:
-    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+    level: "%5p [${spring.application.name:}]"
   level:
     io.opentelemetry: INFO

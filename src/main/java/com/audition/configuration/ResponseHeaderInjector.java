@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import org.slf4j.MDC;
+
 /**
  * Inject openTelemetry trace and span Ids in the response headers.
  */
@@ -24,30 +26,33 @@ public class ResponseHeaderInjector implements HandlerInterceptor {
 
     public ResponseHeaderInjector() {
         this.tracer = GlobalOpenTelemetry.getTracer("com.audition");
-        System.out.println("--------------------------------------------");
     }
 
     /**
-     * start tracing
+     * Start tracing and inject trace and span IDs into response headers.
      *
-     * @param request HttpServletRequest
+     * @param request  HttpServletRequest
      * @param response HttpServletResponse
-     * @param handler not use
-     * @return success or not
+     * @param handler  Not used
+     * @return true to proceed with the request
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        System.out.println("-----------++++++++++++++++++------------");
         // Start tracing
         Span currentSpan = tracer.spanBuilder("http_request").startSpan();
-
-        System.out.println("traceid:" + currentSpan.getSpanContext().getTraceId());
-        System.out.println("spanid:" + currentSpan.getSpanContext().getSpanId());
 
         // Make the span the current span
         Scope scope = currentSpan.makeCurrent();
 
-        // Store both the span and scope in the request attributes
+        // Add trace and span IDs to MDC
+        MDC.put("trace_id", currentSpan.getSpanContext().getTraceId());
+        MDC.put("span_id", currentSpan.getSpanContext().getSpanId());
+
+        // Inject trace ID and span ID into response headers
+        response.setHeader(TRACE_ID_HEADER, currentSpan.getSpanContext().getTraceId());
+        response.setHeader(SPAN_ID_HEADER, currentSpan.getSpanContext().getSpanId());
+
+        // Store both the span and scope in the request attributes for later use
         request.setAttribute("currentSpan", currentSpan);
         request.setAttribute("currentScope", scope);
 
@@ -55,52 +60,33 @@ public class ResponseHeaderInjector implements HandlerInterceptor {
     }
 
     /**
-     * inject header
-     * @param request HttpServletRequest
+     * Complete the trace and close the scope.
+     *
+     * @param request  HttpServletRequest
      * @param response HttpServletResponse
-     * @param handler not use
-     */
-    @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, org.springframework.web.servlet.ModelAndView modelAndView) {
-        // Inject trace and span IDs into response headers
-        System.out.println("++++++++++++++++++++++++++++++++++++++++++++");
-
-        Span currentSpan = (Span) request.getAttribute("currentSpan");
-        System.out.println("traceid:" + currentSpan.getSpanContext().getTraceId());
-        System.out.println("spanid:" + currentSpan.getSpanContext().getSpanId());
-        if (currentSpan != null) {
-            response.setHeader(TRACE_ID_HEADER, currentSpan.getSpanContext().getTraceId());
-            response.setHeader(SPAN_ID_HEADER, currentSpan.getSpanContext().getSpanId());
-        }
-    }
-
-    /**
-     * ending tracing
-     * @param request HttpServletRequest
-     * @param response HttpServletResponse
-     * @param handler not use
+     * @param handler  Not used
+     * @param ex       Any exception that occurred during request processing
      */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-        System.out.println("============================================");
-        // End tracing
+        // Retrieve the current span and scope from the request
         Span currentSpan = (Span) request.getAttribute("currentSpan");
         Scope currentScope = (Scope) request.getAttribute("currentScope");
 
-
-        System.out.println("traceid:" + currentSpan.getSpanContext().getTraceId());
-        System.out.println("spanid:" + currentSpan.getSpanContext().getSpanId());
-
         if (currentSpan != null) {
+            // Record exception if it occurred
             if (ex != null) {
                 currentSpan.recordException(ex);
                 currentSpan.setStatus(StatusCode.ERROR, "Exception occurred during request processing");
             }
+            // End the span
             currentSpan.end();
         }
 
+        // Close the scope if it exists
         if (currentScope != null) {
             currentScope.close();
         }
+        MDC.clear();
     }
 }

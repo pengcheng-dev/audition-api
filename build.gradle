@@ -28,6 +28,9 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
 }
 
 ext {
@@ -35,7 +38,7 @@ ext {
     set('logbackVersion', "1.4.5")
     set('slf4jVersion', "2.0.5")
     set('springdocVersion', "2.0.2")
-    set('openTelemetryVersion', "1.25.0")
+    set('openTelemetryVersion', "1.24.0-alpha")
 }
 
 dependencies {
@@ -54,15 +57,16 @@ dependencies {
 
     developmentOnly "org.springframework.boot:spring-boot-devtools"
 
-    //implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.6.0"
-    // OpenTelemetry API
-    implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
-    // OpenTelemetry SDK
-    implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
-    // OpenTelemetry Context
-    implementation "io.opentelemetry:opentelemetry-context:${openTelemetryVersion}"
+    // OpenTelemetry dependencies
+    implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:${openTelemetryVersion}"
+    implementation "io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0:2.6.0-alpha"
+    //implementation "io.opentelemetry:opentelemetry-exporter-otlp:${openTelemetryVersion}"
+    //implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
+    //implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
+    //implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
+    //implementation "io.opentelemetry:opentelemetry-context:${openTelemetryVersion}"
     // Add exporter
-    implementation "io.opentelemetry:opentelemetry-exporter-jaeger:${openTelemetryVersion}"
+    //implementation "io.opentelemetry:opentelemetry-exporter-jaeger:${openTelemetryVersion}"
 
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     implementation "ch.qos.logback:logback-core:${logbackVersion}"

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter;
+//import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
@@ -47,7 +47,6 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        //registry.addInterceptor(new OpenTelemetryInterceptor());
         registry.addInterceptor(responseHeaderInjector);
         registry.addInterceptor(requestLoggingInjector);
         registry.addInterceptor(responseMetricsInjector);
