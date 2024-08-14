@@ -41,7 +41,8 @@ public class ResponseMetricsInjector implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
+        Exception ex) {
         // Record the request processing time using Micrometer
         Timer.Sample sample = (Timer.Sample) request.getAttribute("timerSample");
         if (sample != null) {

@@ -7,14 +7,12 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.TraceFlags;
 import io.opentelemetry.api.trace.TraceState;
 import io.opentelemetry.api.trace.Tracer;
-
 import io.opentelemetry.context.Scope;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-
-import org.slf4j.MDC;
 
 /**
  * Inject openTelemetry trace and span Ids in the response headers.
@@ -89,7 +87,8 @@ public class ResponseHeaderInjector implements HandlerInterceptor {
      * @param ex       Any exception that occurred during request processing
      */
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
+        Exception ex) {
         // Retrieve the current span and scope from the request
         Span currentSpan = (Span) request.getAttribute("currentSpan");
         Scope currentScope = (Scope) request.getAttribute("currentScope");

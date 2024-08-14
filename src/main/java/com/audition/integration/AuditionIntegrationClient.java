@@ -22,6 +22,7 @@ public class AuditionIntegrationClient {
 
     /**
      * fetch all posts
+     *
      * @return List of AuditionPost
      */
     public List<AuditionPost> getPosts() {
@@ -30,7 +31,8 @@ public class AuditionIntegrationClient {
                 "https://jsonplaceholder.typicode.com/posts",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<AuditionPost>>() {});
+                new ParameterizedTypeReference<List<AuditionPost>>() {
+                });
             return response.getBody();
         } catch (HttpClientErrorException e) {
             throw new SystemException("Failed to retrieve posts", e.getStatusCode().value(), e);
@@ -41,6 +43,7 @@ public class AuditionIntegrationClient {
 
     /**
      * fetch post by a dedicated id
+     *
      * @param id used to fetch post
      * @return AuditionPost
      */
@@ -60,16 +63,18 @@ public class AuditionIntegrationClient {
 
     /**
      * fetch post by id and filled with comments
+     *
      * @param postId used to fetch post and comments of this post
      * @return AuditionPost filled with comments
      */
     public AuditionPost getPostWithCommentsById(int postId) {
         try {
             // Fetch the post
-            AuditionPost post = restTemplate.getForObject("https://jsonplaceholder.typicode.com/posts/" + postId, AuditionPost.class);
+            AuditionPost post = restTemplate.getForObject("https://jsonplaceholder.typicode.com/posts/" + postId,
+                AuditionPost.class);
 
             // Fetch the comments for the post
-            if(post != null) {
+            if (post != null) {
                 List<Comment> comments = getCommentsByPostId(post.getId());
                 // Set comments to the post
                 post.setComments(comments);
@@ -88,6 +93,7 @@ public class AuditionIntegrationClient {
 
     /**
      * fetch a comment list of a dedicated post by id
+     *
      * @param postId used to fetch comments of a dedicated post by id
      * @return List of comment of a post
      */
@@ -98,7 +104,8 @@ public class AuditionIntegrationClient {
                 "https://jsonplaceholder.typicode.com/posts/" + postId + "/comments",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Comment>>() {});
+                new ParameterizedTypeReference<List<Comment>>() {
+                });
             return response.getBody();
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {

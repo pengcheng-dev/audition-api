@@ -3,11 +3,11 @@ package com.audition.configuration;
 import com.audition.common.logging.AuditionLogger;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Component
 public class RequestLoggingInjector implements HandlerInterceptor {
@@ -29,11 +29,13 @@ public class RequestLoggingInjector implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
+        Exception ex) {
         // Log response status and any exceptions
-        logger.info(LOG,"Response Status: {}", response.getStatus());
+        logger.info(LOG, "Response Status: {}", response.getStatus());
         if (ex != null) {
-            logger.logErrorWithException(LOG,"Request to " + request.getRequestURI() + " resulted in an exception", ex);
+            logger.logErrorWithException(LOG, "Request to " + request.getRequestURI() + " resulted in an exception",
+                ex);
         }
     }
 

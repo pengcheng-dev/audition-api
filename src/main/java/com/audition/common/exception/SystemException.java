@@ -5,9 +5,8 @@ import lombok.Getter;
 @Getter
 public class SystemException extends RuntimeException {
 
-    private static final long serialVersionUID = -5876728854007114881L;
-
     public static final String DEFAULT_TITLE = "API Error Occurred";
+    private static final long serialVersionUID = -5876728854007114881L;
     private Integer statusCode;
     private String title;
     private String detail;
@@ -53,7 +52,8 @@ public class SystemException extends RuntimeException {
         this.detail = detail;
     }
 
-    public SystemException(final String detail, final String title, final Integer errorCode, final Throwable exception) {
+    public SystemException(final String detail, final String title, final Integer errorCode,
+        final Throwable exception) {
         super(detail, exception);
         this.statusCode = errorCode;
         this.title = title;

@@ -22,20 +22,18 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
-    @Autowired
-    private MeterRegistry meterRegistry;
-
     public static final String DEFAULT_TITLE = "API Error Occurred";
     private static final Logger LOG = LoggerFactory.getLogger(ExceptionControllerAdvice.class);
     private static final String ERROR_MESSAGE = " Error Code from Exception could not be mapped to a valid HttpStatus Code - ";
     private static final String DEFAULT_MESSAGE = "API Error occurred. Please contact support or administrator.";
-
+    @Autowired
+    private MeterRegistry meterRegistry;
     @Autowired
     private AuditionLogger logger;
 
     @ExceptionHandler(HttpClientErrorException.class)
     ProblemDetail handleHttpClientException(final HttpClientErrorException e) {
-        ProblemDetail problemDetail =  createProblemDetail(e, e.getStatusCode());
+        ProblemDetail problemDetail = createProblemDetail(e, e.getStatusCode());
 
         logger.logStandardProblemDetail(LOG, problemDetail, e);
 
@@ -45,6 +43,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
     /**
      * Global handel exception type of Exception
+     *
      * @param e Exception
      * @return ProblemDetail
      */
@@ -67,6 +66,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
     /**
      * Global handel exception type of SystemException
+     *
      * @param e SystemException
      * @return ProblemDetail
      */

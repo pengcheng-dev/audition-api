@@ -1,12 +1,10 @@
 package com.audition.web;
 
 import com.audition.common.logging.AuditionLogger;
-import com.audition.configuration.RequestLoggingInjector;
 import com.audition.model.AuditionPost;
 import com.audition.model.Comment;
 import com.audition.service.AuditionService;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,22 +19,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AuditionController {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AuditionController.class);
     @Autowired
     AuditionService auditionService;
-
-
-    private static final Logger LOG = LoggerFactory.getLogger(AuditionController.class);
-
     @Autowired
     private AuditionLogger logger;
 
     /**
-     *
      * @param filterString used to filter the posts either title or body contains this filter string
      * @return List of AuditionPost
      */
     @RequestMapping(value = "/posts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody List<AuditionPost> getPosts(@RequestParam(value = "filterString", required = false) final String filterString) {
+    public @ResponseBody List<AuditionPost> getPosts(
+        @RequestParam(value = "filterString", required = false) final String filterString) {
         List<AuditionPost> posts = auditionService.getPosts();
 
         if (filterString != null && !filterString.isEmpty()) {
@@ -49,7 +44,6 @@ public class AuditionController {
     }
 
     /**
-     *
      * @param postId used to query post match this post ID
      * @return AuditionPost
      */
@@ -70,7 +64,6 @@ public class AuditionController {
     }
 
     /**
-     *
      * @param postId used to query all comments of this post
      * @return AuditionPost
      */

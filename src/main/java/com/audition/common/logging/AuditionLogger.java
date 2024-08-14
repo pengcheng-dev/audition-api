@@ -60,7 +60,7 @@ public class AuditionLogger {
     private String createStandardProblemDetailMessage(final ProblemDetail standardProblemDetail) {
         StringBuilder message = new StringBuilder();
 
-        if (standardProblemDetail.getStatus() >0 ) {
+        if (standardProblemDetail.getStatus() > 0) {
             message.append("Status: ").append(standardProblemDetail.getStatus()).append(" - ");
         }
         if (StringUtils.isNotBlank(standardProblemDetail.getTitle())) {
@@ -69,7 +69,8 @@ public class AuditionLogger {
         if (StringUtils.isNotBlank(standardProblemDetail.getDetail())) {
             message.append("Detail: ").append(standardProblemDetail.getDetail()).append(" - ");
         }
-        if (standardProblemDetail.getInstance() != null && StringUtils.isNotBlank(standardProblemDetail.getInstance().toString())) {
+        if (standardProblemDetail.getInstance() != null && StringUtils.isNotBlank(
+            standardProblemDetail.getInstance().toString())) {
             message.append("Instance: ").append(standardProblemDetail.getInstance());
         }
 
