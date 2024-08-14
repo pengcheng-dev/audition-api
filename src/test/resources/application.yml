@@ -1,12 +1,44 @@
 spring:
+  application:
+    name: audition-api
   config:
     import: "optional:configserver:"
+  main:
+    allow-bean-definition-overriding: true
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-application:
-  connection:
-    read-timeout: 5000
-    write-timeout: 5000
-    connect-timeout: 5000
-    response-timeout: 5000
+  mvc:
+    throw-exception-if-no-handler-found: true
+server:
+  max-http-request-header-size: 16KB
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0  # Ensure full sampling if desired
+  endpoints:
+    web:
+      exposure:
+        include: "info,health"
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    metrics:
+      enabled: true
+otel:
+  traces:
+    exporter:
+      otlp:
+        endpoint: "http://localhost:4317"  # Change this to your OTLP endpoint
+  logs:
+    exporter:
+      console:
+        enabled: true
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-}]"
+  level:
+    io.opentelemetry: INFO

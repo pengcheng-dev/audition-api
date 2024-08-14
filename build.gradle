@@ -52,8 +52,9 @@ dependencies {
     //implementation "io.micrometer:micrometer-tracing-bridge-brave"
     //implementation "io.micrometer:micrometer-tracing"
     //implementation "io.micrometer:context-propagation"
+    implementation "io.micrometer:micrometer-core"
     implementation "io.micrometer:micrometer-registry-prometheus"
-    runtimeOnly "io.micrometer:micrometer-registry-prometheus"
+    //runtimeOnly "io.micrometer:micrometer-registry-prometheus"
 
     developmentOnly "org.springframework.boot:spring-boot-devtools"
 

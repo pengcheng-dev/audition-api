@@ -33,16 +33,12 @@ otel:
     exporter:
       otlp:
         endpoint: "http://localhost:4317"  # Change this to your OTLP endpoint
-  metrics:
-    exporter:
-      otlp:
-        endpoint: "http://localhost:4318"  # Change this to your OTLP endpoint
   logs:
     exporter:
       console:
         enabled: true
 logging:
   pattern:
-    level: "%5p [${spring.application.name:}]"
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-}]"
   level:
     io.opentelemetry: INFO
