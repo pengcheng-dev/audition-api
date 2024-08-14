@@ -2,7 +2,10 @@ package com.audition.configuration;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.TraceFlags;
+import io.opentelemetry.api.trace.TraceState;
 import io.opentelemetry.api.trace.Tracer;
 
 import io.opentelemetry.context.Scope;
@@ -38,8 +41,26 @@ public class ResponseHeaderInjector implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // Start tracing
-        Span currentSpan = tracer.spanBuilder("http_request").startSpan();
+
+        // Extract trace ID and span ID from incoming request headers if present
+        String incomingTraceId = request.getHeader(TRACE_ID_HEADER);
+        String incomingSpanId = request.getHeader(SPAN_ID_HEADER);
+
+        // Check if the incoming headers contain trace and span IDs
+        Span currentSpan;
+        if (incomingTraceId != null && incomingSpanId != null) {
+            // If incoming trace and span IDs are present, create a span with this context
+            currentSpan = tracer.spanBuilder("http_request")
+                .setParent(io.opentelemetry.context.Context.current().with(Span.wrap(SpanContext.createFromRemoteParent(
+                    incomingTraceId,
+                    incomingSpanId,
+                    TraceFlags.getDefault(),
+                    TraceState.getDefault()))))
+                .startSpan();
+        } else {
+            // Otherwise, start a new span
+            currentSpan = tracer.spanBuilder("http_request").startSpan();
+        }
 
         // Make the span the current span
         Scope scope = currentSpan.makeCurrent();

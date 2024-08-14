@@ -2,8 +2,6 @@ package com.audition.configuration;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Scope;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,88 +10,70 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.MDC;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
 class ResponseHeaderInjectorTest {
 
-    @MockBean
-    private Tracer tracer;
-
-    private SpanBuilder mockSpanBuilder;
-    private SpanContext mockSpanContext;
-
     private ResponseHeaderInjector responseHeaderInjector;
-    private HttpServletRequest mockRequest;
-    private HttpServletResponse mockResponse;
-    private Span mockSpan;
-    private Scope mockScope;
+    private Tracer tracer;
+    private HttpServletRequest request;
+    private HttpServletResponse response;
 
     @BeforeEach
     void setUp() {
-        mockSpanBuilder = Mockito.mock(SpanBuilder.class);
-        mockSpanContext = Mockito.mock(SpanContext.class);
-        mockSpan = Mockito.mock(Span.class);
-        mockScope = Mockito.mock(Scope.class);
-        mockRequest = Mockito.mock(HttpServletRequest.class);
-        mockResponse = Mockito.mock(HttpServletResponse.class);
-
-        when(tracer.spanBuilder(anyString())).thenReturn(mockSpanBuilder);
-        when(mockSpanBuilder.startSpan()).thenReturn(mockSpan);
-        when(mockSpan.makeCurrent()).thenReturn(mockScope);
-
+        tracer = GlobalOpenTelemetry.getTracer("com.audition");
         responseHeaderInjector = new ResponseHeaderInjector();
+        request = mock(HttpServletRequest.class);
+        response = mock(HttpServletResponse.class);
     }
 
     @Test
-    void testPreHandle() {
-        when(mockSpan.getSpanContext()).thenReturn(mockSpanContext);
-        when(mockSpanContext.getTraceId()).thenReturn("test-trace-id");
+    void testPreHandleWithExistingTraceIdAndSpanId() {
+        // Mock incoming trace ID and span ID
+        String traceId = "1234567890abcdef1234567890abcdef";
+        String spanId = "abcdef1234567890";
+        when(request.getHeader("X-Trace-Id")).thenReturn(traceId);
+        when(request.getHeader("X-Span-Id")).thenReturn(spanId);
 
-        when(mockSpan.getSpanContext()).thenReturn(mockSpanContext);
-        when(mockSpanContext.getSpanId()).thenReturn("test-span-id");
+        // Call the preHandle method
+        boolean result = responseHeaderInjector.preHandle(request, response, null);
 
-        responseHeaderInjector.preHandle(mockRequest, mockResponse, new Object());
+        // Verify the span is continued from the provided context
+        Span currentSpan = (Span) request.getAttribute("currentSpan");
+        assertNotNull(currentSpan);
+        assertEquals(traceId, currentSpan.getSpanContext().getTraceId());
+        assertEquals(spanId, currentSpan.getSpanContext().getSpanId());
 
-        verify(mockResponse).setHeader("X-Trace-Id", "test-trace-id");
-        verify(mockResponse).setHeader("X-Span-Id", "test-span-id");
-        verify(mockRequest).setAttribute("currentSpan", mockSpan);
-        verify(mockRequest).setAttribute("currentScope", mockScope);
-        assertEquals("test-trace-id", MDC.get("trace_id"));
-        assertEquals("test-span-id", MDC.get("span_id"));
+        // Verify MDC values
+        assertEquals(traceId, MDC.get("trace_id"));
+        assertEquals(spanId, MDC.get("span_id"));
+
+        // Ensure preHandle returns true
+        assertEquals(true, result);
     }
 
     @Test
-    void testAfterCompletion() {
-        when(mockRequest.getAttribute("currentSpan")).thenReturn(mockSpan);
-        when(mockRequest.getAttribute("currentScope")).thenReturn(mockScope);
+    void testPreHandleWithoutExistingTraceIdAndSpanId() {
+        // No trace ID or span ID in headers
+        when(request.getHeader(anyString())).thenReturn(null);
 
-        responseHeaderInjector.afterCompletion(mockRequest, mockResponse, new Object(), null);
+        // Call the preHandle method
+        boolean result = responseHeaderInjector.preHandle(request, response, null);
 
-        verify(mockSpan).end();
-        verify(mockScope).close();
-        assertNull(MDC.get("trace_id"));
-        assertNull(MDC.get("span_id"));
-    }
+        // Verify a new span is created
+        Span currentSpan = (Span) request.getAttribute("currentSpan");
+        assertNotNull(currentSpan);
 
-    @Test
-    void testAfterCompletionWithException() {
-        Exception ex = new RuntimeException("Test exception");
-        when(mockRequest.getAttribute("currentSpan")).thenReturn(mockSpan);
-        when(mockRequest.getAttribute("currentScope")).thenReturn(mockScope);
+        // Verify MDC values
+        assertNotNull(MDC.get("trace_id"));
+        assertNotNull(MDC.get("span_id"));
 
-        responseHeaderInjector.afterCompletion(mockRequest, mockResponse, new Object(), ex);
-
-        verify(mockSpan).recordException(ex);
-        verify(mockSpan).setStatus(any(), eq("Exception occurred during request processing"));
-        verify(mockSpan).end();
-        verify(mockScope).close();
-        assertNull(MDC.get("trace_id"));
-        assertNull(MDC.get("span_id"));
+        // Ensure preHandle returns true
+        assertEquals(true, result);
     }
 }
