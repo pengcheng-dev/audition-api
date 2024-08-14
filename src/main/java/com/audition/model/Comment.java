@@ -1,10 +1,8 @@
 package com.audition.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class Comment {
 
     private int postId;

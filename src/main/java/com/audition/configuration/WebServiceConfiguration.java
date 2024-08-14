@@ -101,14 +101,22 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
     @Bean
     public ClientHttpRequestInterceptor loggingInterceptor() {
         return (request, body, execution) -> {
-            logger.info(LOG, "Request URI: " + request.getURI());
-            logger.info(LOG, "Request Method: " + request.getMethod());
-            logger.info(LOG, "Request Body: " + new String(body, Charset.defaultCharset()));
+
+            StringBuilder logMessage = new StringBuilder();
+
+            logMessage.append("Request URI: ").append(request.getURI()).append("\n")
+                .append("Request Method: ").append(request.getMethod()).append("\n")
+                .append("Request Body: ").append(new String(body, Charset.defaultCharset())).append("\n");
+
+            logger.info(LOG, logMessage.toString());
 
             var response = execution.execute(request, body);
 
-            logger.info(LOG, "Response Status Code: " + response.getStatusCode());
-            logger.info(LOG, "Response Body: " + new String(response.getBody().readAllBytes(), Charset.defaultCharset()));
+            logMessage.setLength(0); // Clear the StringBuilder for reuse
+            logMessage.append("Response Status Code: ").append(response.getStatusCode()).append("\n")
+                .append("Response Body: ").append(new String(response.getBody().readAllBytes(), Charset.defaultCharset())).append("\n");
+
+            logger.info(LOG, logMessage.toString());
 
             return response;
         };

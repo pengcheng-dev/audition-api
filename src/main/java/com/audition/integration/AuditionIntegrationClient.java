@@ -23,6 +23,8 @@ public class AuditionIntegrationClient {
     @Autowired
     private RestTemplate restTemplate;
 
+    private final String POST_REST_URL = "https://jsonplaceholder.typicode.com/posts";
+
     /**
      * fetch all posts
      *
@@ -31,7 +33,7 @@ public class AuditionIntegrationClient {
     public List<AuditionPost> getPosts() {
         try {
             ResponseEntity<List<AuditionPost>> response = restTemplate.exchange(
-                "https://jsonplaceholder.typicode.com/posts",
+                POST_REST_URL,
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<AuditionPost>>() {
@@ -52,7 +54,7 @@ public class AuditionIntegrationClient {
      */
     public AuditionPost getPostById(int id) {
         try {
-            return restTemplate.getForObject("https://jsonplaceholder.typicode.com/posts/" + id, AuditionPost.class);
+            return restTemplate.getForObject(POST_REST_URL + "/" + id, AuditionPost.class);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                 throw new SystemException("Cannot find a Post with id " + id, "Resource Not Found", 404);
@@ -73,7 +75,7 @@ public class AuditionIntegrationClient {
     public AuditionPost getPostWithCommentsById(int postId) {
         try {
             // Fetch the post
-            AuditionPost post = restTemplate.getForObject("https://jsonplaceholder.typicode.com/posts/" + postId,
+            AuditionPost post = restTemplate.getForObject(POST_REST_URL + "/" + postId,
                 AuditionPost.class);
 
             // Fetch the comments for the post
@@ -104,7 +106,7 @@ public class AuditionIntegrationClient {
 
         try {
             ResponseEntity<List<Comment>> response = restTemplate.exchange(
-                "https://jsonplaceholder.typicode.com/posts/" + postId + "/comments",
+                POST_REST_URL + "/" + postId + "/comments",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Comment>>() {

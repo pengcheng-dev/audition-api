@@ -30,10 +30,15 @@ public class RequestLoggingInjector implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         // Log request details
-        logger.info(LOG, "Request URI: {}", request.getRequestURI());
-        logger.info(LOG, "Request Method: {}", request.getMethod());
-        logger.info(LOG, "Request Query String: {}", request.getQueryString());
-        logger.info(LOG, "Request Remote User: {}", request.getRemoteUser());
+
+        StringBuilder logMessage = new StringBuilder();
+
+        logMessage.append("Request URI: ").append(request.getRequestURI()).append("\n")
+            .append("Request Method: ").append(request.getMethod()).append("\n")
+            .append("Request Query String: ").append(request.getQueryString()).append("\n")
+            .append("Request Remote User: ").append(request.getRemoteUser());
+
+        logger.info(LOG, logMessage.toString());
 
         return true;
     }

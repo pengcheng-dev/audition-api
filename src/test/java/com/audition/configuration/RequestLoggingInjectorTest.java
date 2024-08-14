@@ -40,11 +40,14 @@ class RequestLoggingInjectorTest {
 
         requestLoggingInjector.preHandle(mockRequest, mockResponse, new Object());
 
-        verify(logger, times(1)).info(any(Logger.class), eq("Request URI: {}"), eq("/test-uri"));
-        verify(logger, times(1)).info(any(Logger.class), eq("Request Method: {}"), eq("GET"));
-        verify(logger, times(1)).info(any(Logger.class), eq("Request Query String: {}"), eq("param1=value1"));
-        verify(logger, times(1)).info(any(Logger.class), eq("Request Remote User: {}"), eq("user123"));
-    }
+        String expectedLogMessage = new StringBuilder()
+            .append("Request URI: ").append("/test-uri").append("\n")
+            .append("Request Method: ").append("GET").append("\n")
+            .append("Request Query String: ").append("param1=value1").append("\n")
+            .append("Request Remote User: ").append("user123")
+            .toString();
+
+        verify(logger, times(1)).info(any(Logger.class), eq(expectedLogMessage));    }
 
     @Test
     void testAfterCompletion() {
