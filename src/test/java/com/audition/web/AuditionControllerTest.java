@@ -4,7 +4,6 @@ import com.audition.common.logging.AuditionLogger;
 import com.audition.model.AuditionPost;
 import com.audition.model.Comment;
 import com.audition.service.AuditionService;
-import com.audition.web.advice.ExceptionControllerAdvice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -1,6 +1,5 @@
 package com.audition;
 
-import com.audition.integration.AuditionIntegrationClient;
 import com.audition.service.AuditionService;
 import com.audition.web.AuditionController;
 import org.junit.jupiter.api.Test;

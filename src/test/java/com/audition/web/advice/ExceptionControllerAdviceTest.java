@@ -14,7 +14,6 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.lang.reflect.Field;
 
-import static org.assertj.core.api.AssertionsForClassTypes.not;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -60,10 +61,6 @@ class ResponseHeaderInjectorTest {
         // Call the preHandle method
         boolean result = responseHeaderInjector.preHandle(request, response, null);
 
-        // Verify span continuation
-        //verify(spanBuilder).setParent(any(Context.class));
-        //verify(spanBuilder).startSpan();
-
         // Verify the span is continued from the provided context
         assertNotNull(span);
         assertEquals(traceId, span.getSpanContext().getTraceId());
@@ -74,7 +71,7 @@ class ResponseHeaderInjectorTest {
         assertEquals(spanId, MDC.get("span_id"));
 
         // Ensure preHandle returns true
-        assertEquals(true, result);
+        assertTrue(result);
     }
 
     @Test
@@ -106,6 +103,6 @@ class ResponseHeaderInjectorTest {
         assertNotNull(MDC.get("span_id"));
 
         // Ensure preHandle returns true
-        assertEquals(true, result);
+        assertTrue(result);
     }
 }

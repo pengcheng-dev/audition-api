@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.web.servlet.HandlerInterceptor;
 
 import static org.mockito.Mockito.*;
 
@@ -25,13 +24,11 @@ class RequestLoggingInjectorTest {
 
     private HttpServletRequest mockRequest;
     private HttpServletResponse mockResponse;
-    private Logger mockSlf4jLogger;
 
     @BeforeEach
     void setUp() {
         mockRequest = Mockito.mock(HttpServletRequest.class);
         mockResponse = Mockito.mock(HttpServletResponse.class);
-        mockSlf4jLogger = Mockito.mock(Logger.class);
     }
 
     @Test
