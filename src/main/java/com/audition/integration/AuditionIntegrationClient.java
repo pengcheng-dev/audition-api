@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * proxy class for rest template
+ */
 @Component
 public class AuditionIntegrationClient {
 

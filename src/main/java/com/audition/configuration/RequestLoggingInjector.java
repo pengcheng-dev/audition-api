@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+/**
+ * log request and response info for each http request
+ */
 @Component
 public class RequestLoggingInjector implements HandlerInterceptor {
 
@@ -17,6 +20,13 @@ public class RequestLoggingInjector implements HandlerInterceptor {
     @Autowired
     private AuditionLogger logger;
 
+    /**
+     * log request info
+     * @param request HttpServletRequest
+     * @param response HttpServletResponse
+     * @param handler handler
+     * @return true
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         // Log request details
@@ -28,6 +38,13 @@ public class RequestLoggingInjector implements HandlerInterceptor {
         return true;
     }
 
+    /**
+     * log response info
+     * @param request HttpServletRequest
+     * @param response HttpServletResponse
+     * @param handler handler
+     * @param ex exception
+     */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
         Exception ex) {

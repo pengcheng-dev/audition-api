@@ -7,6 +7,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * business logic for query posts and comments
+ */
 @Service
 public class AuditionService {
 
@@ -18,10 +21,16 @@ public class AuditionService {
     }
 
     public AuditionPost getPostById(int postId) {
+        if(postId <= 0){
+            throw new IllegalArgumentException("Post ID must be positive");
+        }
         return auditionIntegrationClient.getPostById(postId);
     }
 
     public List<Comment> getCommentsByPostId(int postId) {
+        if(postId <= 0){
+            throw new IllegalArgumentException("Post ID must be positive");
+        }
         return auditionIntegrationClient.getCommentsByPostId(postId);
     }
 }

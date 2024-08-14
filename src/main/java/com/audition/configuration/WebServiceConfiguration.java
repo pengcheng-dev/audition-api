@@ -40,6 +40,13 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
     @Autowired
     private RequestLoggingInjector requestLoggingInjector;
 
+    /**
+     * Add three injectors for a request, including:
+     * 1. response header injector to return tracing info to client
+     * 2. request logging injector to log request and response info
+     * 3. metrics to record application key metrics
+     * @param registry metrics registry
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(responseHeaderInjector);
@@ -87,6 +94,10 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
         return restTemplate;
     }
 
+    /**
+     * Add request and response info to and from a rest template call
+     * @return ClientHttpRequestInterceptor
+     */
     @Bean
     public ClientHttpRequestInterceptor loggingInterceptor() {
         return (request, body, execution) -> {
