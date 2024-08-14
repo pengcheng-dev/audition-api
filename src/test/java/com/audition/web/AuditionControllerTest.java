@@ -16,7 +16,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class AuditionControllerAdviceTest {
+class AuditionControllerTest {
 
     @MockBean
     private AuditionService auditionService;

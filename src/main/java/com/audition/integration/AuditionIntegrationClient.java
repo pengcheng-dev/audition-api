@@ -65,11 +65,11 @@ public class AuditionIntegrationClient {
     }
 
     /**
-     * fetch post by id and filled with comments
-     *
+     * fetch post by id and filled with comments, service layer has provided this service
      * @param postId used to fetch post and comments of this post
      * @return AuditionPost filled with comments
      */
+    @Deprecated
     public AuditionPost getPostWithCommentsById(int postId) {
         try {
             // Fetch the post

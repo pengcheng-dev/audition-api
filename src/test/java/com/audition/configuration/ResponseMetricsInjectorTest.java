@@ -77,6 +77,11 @@ class ResponseMetricsInjectorTest {
         when(request.getAttribute("timerSample")).thenReturn(timerSample);
         when(response.getStatus()).thenReturn(200);
 
+        // Set up mock behavior for request and response
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getRequestURI()).thenReturn("/test-uri");
+        when(response.getStatus()).thenReturn(200);
+
         try (MockedStatic<Timer> mockedTimer = mockStatic(Timer.class)) {
             Timer.Builder timerBuilder = mock(Timer.Builder.class);
             when(Timer.builder("http.server.requests")).thenReturn(timerBuilder);
@@ -99,6 +104,11 @@ class ResponseMetricsInjectorTest {
         // Setup request and response
         when(request.getAttribute("timerSample")).thenReturn(timerSample);
         when(response.getStatus()).thenReturn(500);
+
+        // Set up mock behavior for request and response
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getRequestURI()).thenReturn("/test-uri");
+        when(response.getStatus()).thenReturn(200);
 
         try (MockedStatic<Timer> mockedTimer = mockStatic(Timer.class)) {
             Timer.Builder timerBuilder = mock(Timer.Builder.class);

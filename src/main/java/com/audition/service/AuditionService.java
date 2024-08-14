@@ -27,6 +27,27 @@ public class AuditionService {
         return auditionIntegrationClient.getPostById(postId);
     }
 
+    /**
+     * Fetch post with comments, composition should be finished in service layer
+     * @param postId post id
+     * @return AuditionPost
+     */
+    public AuditionPost getPostWithCommentsById(int postId) {
+        if(postId <= 0){
+            throw new IllegalArgumentException("Post ID must be positive");
+        }
+        AuditionPost post = auditionIntegrationClient.getPostById(postId);
+
+        // Fetch the comments for the post
+        if (post != null) {
+            List<Comment> comments = getCommentsByPostId(post.getId());
+            // Set comments to the post
+            post.setComments(comments);
+        }
+
+        return post;
+    }
+
     public List<Comment> getCommentsByPostId(int postId) {
         if(postId <= 0){
             throw new IllegalArgumentException("Post ID must be positive");
