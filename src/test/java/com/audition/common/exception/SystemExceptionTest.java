@@ -1,16 +1,21 @@
 package com.audition.common.exception;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class SystemExceptionTest {
 
+    private static final String MESSAGE = "An error occurred";
+    private static final String DETAILED_MESSAGE = "Detailed message";
+    private static final String ROOT_CAUSE_MESSAGE = "Root cause";
+
     @Test
     void testDefaultConstructor() {
-        SystemException exception = new SystemException();
+        final SystemException exception = new SystemException();
         assertNull(exception.getMessage());
         assertNull(exception.getTitle());
         assertNull(exception.getStatusCode());
@@ -19,8 +24,8 @@ class SystemExceptionTest {
 
     @Test
     void testConstructorWithMessage() {
-        String message = "An error occurred";
-        SystemException exception = new SystemException(message);
+        final String message = MESSAGE;
+        final SystemException exception = new SystemException(message);
         assertEquals(message, exception.getMessage());
         assertEquals(SystemException.DEFAULT_TITLE, exception.getTitle());
         assertNull(exception.getStatusCode());
@@ -29,9 +34,9 @@ class SystemExceptionTest {
 
     @Test
     void testConstructorWithMessageAndErrorCode() {
-        String message = "An error occurred";
-        Integer errorCode = 404;
-        SystemException exception = new SystemException(message, errorCode);
+        final String message = MESSAGE;
+        final Integer errorCode = 404;
+        final SystemException exception = new SystemException(message, errorCode);
         assertEquals(message, exception.getMessage());
         assertEquals(SystemException.DEFAULT_TITLE, exception.getTitle());
         assertEquals(errorCode, exception.getStatusCode());
@@ -40,9 +45,9 @@ class SystemExceptionTest {
 
     @Test
     void testConstructorWithMessageAndThrowable() {
-        String message = "An error occurred";
-        Throwable cause = new RuntimeException("Root cause");
-        SystemException exception = new SystemException(message, cause);
+        final String message = MESSAGE;
+        final Throwable cause = new RuntimeException(ROOT_CAUSE_MESSAGE);
+        final SystemException exception = new SystemException(message, cause);
         assertEquals(message, exception.getMessage());
         assertEquals(SystemException.DEFAULT_TITLE, exception.getTitle());
         assertNull(exception.getStatusCode());
@@ -52,10 +57,10 @@ class SystemExceptionTest {
 
     @Test
     void testConstructorWithDetailTitleAndErrorCode() {
-        String detail = "Detailed message";
-        String title = "Custom Title";
-        Integer errorCode = 500;
-        SystemException exception = new SystemException(detail, title, errorCode);
+        final String detail = DETAILED_MESSAGE;
+        final String title = "Custom Title";
+        final Integer errorCode = 500;
+        final SystemException exception = new SystemException(detail, title, errorCode);
         assertEquals(detail, exception.getMessage());
         assertEquals(title, exception.getTitle());
         assertEquals(errorCode, exception.getStatusCode());
@@ -64,10 +69,10 @@ class SystemExceptionTest {
 
     @Test
     void testConstructorWithDetailTitleAndThrowable() {
-        String detail = "Detailed message";
-        String title = "Custom Title";
-        Throwable cause = new RuntimeException("Root cause");
-        SystemException exception = new SystemException(detail, title, cause);
+        final String detail = DETAILED_MESSAGE;
+        final String title = "Custom Title";
+        final Throwable cause = new RuntimeException(ROOT_CAUSE_MESSAGE);
+        final SystemException exception = new SystemException(detail, title, cause);
         assertEquals(detail, exception.getMessage());
         assertEquals(title, exception.getTitle());
         assertEquals(500, exception.getStatusCode());
@@ -77,10 +82,10 @@ class SystemExceptionTest {
 
     @Test
     void testConstructorWithDetailErrorCodeAndThrowable() {
-        String detail = "Detailed message";
-        Integer errorCode = 500;
-        Throwable cause = new RuntimeException("Root cause");
-        SystemException exception = new SystemException(detail, errorCode, cause);
+        final String detail = DETAILED_MESSAGE;
+        final Integer errorCode = 500;
+        final Throwable cause = new RuntimeException(ROOT_CAUSE_MESSAGE);
+        final SystemException exception = new SystemException(detail, errorCode, cause);
         assertEquals(detail, exception.getMessage());
         assertEquals(SystemException.DEFAULT_TITLE, exception.getTitle());
         assertEquals(errorCode, exception.getStatusCode());
@@ -90,11 +95,11 @@ class SystemExceptionTest {
 
     @Test
     void testConstructorWithDetailTitleErrorCodeAndThrowable() {
-        String detail = "Detailed message";
-        String title = "Custom Title";
-        Integer errorCode = 500;
-        Throwable cause = new RuntimeException("Root cause");
-        SystemException exception = new SystemException(detail, title, errorCode, cause);
+        final String detail = DETAILED_MESSAGE;
+        final String title = "Custom Title";
+        final Integer errorCode = 500;
+        final Throwable cause = new RuntimeException(ROOT_CAUSE_MESSAGE);
+        final SystemException exception = new SystemException(detail, title, errorCode, cause);
         assertEquals(detail, exception.getMessage());
         assertEquals(title, exception.getTitle());
         assertEquals(errorCode, exception.getStatusCode());

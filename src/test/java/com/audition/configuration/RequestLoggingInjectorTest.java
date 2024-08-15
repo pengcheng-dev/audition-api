@@ -11,19 +11,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class RequestLoggingInjectorTest {
 
+    private static final String TEST_URI_STR = "/test-uri";
     @MockBean
-    private AuditionLogger logger;
+    private transient AuditionLogger logger;
 
     @Autowired
-    private RequestLoggingInjector requestLoggingInjector;
+    private transient RequestLoggingInjector requestLoggingInjector;
 
-    private HttpServletRequest mockRequest;
-    private HttpServletResponse mockResponse;
+    private transient HttpServletRequest mockRequest;
+    private transient HttpServletResponse mockResponse;
 
     @BeforeEach
     void setUp() {
@@ -33,21 +38,22 @@ class RequestLoggingInjectorTest {
 
     @Test
     void testPreHandle() {
-        when(mockRequest.getRequestURI()).thenReturn("/test-uri");
+        when(mockRequest.getRequestURI()).thenReturn(TEST_URI_STR);
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockRequest.getQueryString()).thenReturn("param1=value1");
         when(mockRequest.getRemoteUser()).thenReturn("user123");
 
         requestLoggingInjector.preHandle(mockRequest, mockResponse, new Object());
 
-        String expectedLogMessage = new StringBuilder()
-            .append("Request URI: ").append("/test-uri").append("\n")
-            .append("Request Method: ").append("GET").append("\n")
-            .append("Request Query String: ").append("param1=value1").append("\n")
-            .append("Request Remote User: ").append("user123")
+        final String expectedLogMessage = new StringBuilder()
+            .append("Request URI: ").append(TEST_URI_STR)
+            .append("\nRequest Method: ").append("GET")
+            .append("\nRequest Query String: ").append("param1=value1")
+            .append("\nRequest Remote User: ").append("user123")
             .toString();
 
-        verify(logger, times(1)).info(any(Logger.class), eq(expectedLogMessage));    }
+        verify(logger, times(1)).info(any(Logger.class), eq(expectedLogMessage));
+    }
 
     @Test
     void testAfterCompletion() {
@@ -61,7 +67,7 @@ class RequestLoggingInjectorTest {
 
     @Test
     void testAfterCompletionWithException() {
-        Exception ex = new RuntimeException("Test exception");
+        final Exception ex = new RuntimeException("Test exception");
         when(mockRequest.getRequestURI()).thenReturn("/test-uri");
 
         requestLoggingInjector.afterCompletion(mockRequest, mockResponse, new Object(), ex);

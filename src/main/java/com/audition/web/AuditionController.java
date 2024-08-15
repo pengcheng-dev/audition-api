@@ -21,11 +21,13 @@ public class AuditionController {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuditionController.class);
     @Autowired
-    AuditionService auditionService;
+    private transient AuditionService auditionService;
     @Autowired
-    private AuditionLogger logger;
+    private transient AuditionLogger logger;
 
     /**
+     * Get all posts.
+     *
      * @param filterString used to filter the posts either title or body contains this filter string
      * @return List of AuditionPost
      */
@@ -44,14 +46,17 @@ public class AuditionController {
     }
 
     /**
+     * Get post by id.
+     *
      * @param postId used to query post match this post ID
      * @return AuditionPost
      */
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @SuppressWarnings("PMD.GuardLogStatement")
     public @ResponseBody AuditionPost getPost(@PathVariable("id") final String postId) {
 
         try {
-            int id = Integer.parseInt(postId);
+            final int id = Integer.parseInt(postId);
             if (id <= 0) {
                 throw new IllegalArgumentException("Post ID must be positive");
             }
@@ -59,25 +64,28 @@ public class AuditionController {
             return auditionService.getPostById(id);
         } catch (NumberFormatException e) {
             logger.logErrorWithException(LOG, e.getMessage(), e);
-            throw new IllegalArgumentException("Invalid Post ID format.");
+            throw new IllegalArgumentException("Invalid Post ID format.", e);
         }
     }
 
     /**
-     * @param postId used to query all comments of this post
+     * Get comments of a post.
+     *
+     * @param postId used to query all comments of this post.
      * @return AuditionPost
      */
     @RequestMapping(value = "/posts/{id}/comments", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @SuppressWarnings("PMD.GuardLogStatement")
     public @ResponseBody List<Comment> getCommentsByPostId(@PathVariable("id") final String postId) {
         try {
-            int id = Integer.parseInt(postId);
+            final int id = Integer.parseInt(postId);
             if (id <= 0) {
                 throw new IllegalArgumentException("Post ID must be positive.");
             }
             return auditionService.getCommentsByPostId(id);
         } catch (NumberFormatException e) {
             logger.logErrorWithException(LOG, e.getMessage(), e);
-            throw new IllegalArgumentException("Invalid Post ID format.");
+            throw new IllegalArgumentException("Invalid Post ID format.", e);
         }
     }
 

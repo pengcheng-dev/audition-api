@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * log request and response info for each http request
+ * Log request and response info for each http request.
  */
 @Component
 public class RequestLoggingInjector implements HandlerInterceptor {
@@ -18,25 +18,27 @@ public class RequestLoggingInjector implements HandlerInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(RequestLoggingInjector.class);
 
     @Autowired
-    private AuditionLogger logger;
+    private transient AuditionLogger logger;
 
     /**
-     * log request info
+     * Log request info.
+     *
      * @param request HttpServletRequest
      * @param response HttpServletResponse
      * @param handler handler
      * @return true
      */
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    @SuppressWarnings("PMD.GuardLogStatement")
+    public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler) {
         // Log request details
 
-        StringBuilder logMessage = new StringBuilder();
+        final StringBuilder logMessage = new StringBuilder(256);
 
-        logMessage.append("Request URI: ").append(request.getRequestURI()).append("\n")
-            .append("Request Method: ").append(request.getMethod()).append("\n")
-            .append("Request Query String: ").append(request.getQueryString()).append("\n")
-            .append("Request Remote User: ").append(request.getRemoteUser());
+        logMessage.append("Request URI: ").append(request.getRequestURI())
+            .append("\nRequest Method: ").append(request.getMethod())
+            .append("\nRequest Query String: ").append(request.getQueryString())
+            .append("\nRequest Remote User: ").append(request.getRemoteUser());
 
         logger.info(LOG, logMessage.toString());
 
@@ -44,15 +46,17 @@ public class RequestLoggingInjector implements HandlerInterceptor {
     }
 
     /**
-     * log response info
+     * Log response info.
+     *
      * @param request HttpServletRequest
      * @param response HttpServletResponse
      * @param handler handler
      * @param ex exception
      */
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
-        Exception ex) {
+    @SuppressWarnings("PMD.GuardLogStatement")
+    public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response, final Object handler,
+        final Exception ex) {
         // Log response status and any exceptions
         logger.info(LOG, "Response Status: {}", response.getStatus());
         if (ex != null) {

@@ -20,6 +20,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 
 @ControllerAdvice
+@SuppressWarnings("PMD.GuardLogStatement")
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
     public static final String DEFAULT_TITLE = "API Error Occurred";
@@ -27,13 +28,13 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
     private static final String ERROR_MESSAGE = " Error Code from Exception could not be mapped to a valid HttpStatus Code - ";
     private static final String DEFAULT_MESSAGE = "API Error occurred. Please contact support or administrator.";
     @Autowired
-    private MeterRegistry meterRegistry;
+    private transient MeterRegistry meterRegistry;
     @Autowired
-    private AuditionLogger logger;
+    private transient AuditionLogger logger;
 
     @ExceptionHandler(HttpClientErrorException.class)
     ProblemDetail handleHttpClientException(final HttpClientErrorException e) {
-        ProblemDetail problemDetail = createProblemDetail(e, e.getStatusCode());
+        final ProblemDetail problemDetail = createProblemDetail(e, e.getStatusCode());
 
         logger.logStandardProblemDetail(LOG, problemDetail, e);
 
@@ -42,7 +43,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
 
     /**
-     * Global handel exception type of Exception
+     * Global handel exception type of Exception.
      *
      * @param e Exception
      * @return ProblemDetail
@@ -56,7 +57,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
         meterRegistry.counter("exceptions.main", "exception", e.getClass().getSimpleName()).increment();
 
         final HttpStatusCode status = getHttpStatusCodeFromException(e);
-        ProblemDetail problemDetail = createProblemDetail(e, status);
+        final ProblemDetail problemDetail = createProblemDetail(e, status);
 
         problemDetail.setTitle("An unexpected error occurred");
         problemDetail.setDetail(e.getMessage());
@@ -65,7 +66,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * Global handel exception type of SystemException
+     * Global handel exception type of SystemException.
      *
      * @param e SystemException
      * @return ProblemDetail
@@ -82,7 +83,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
         // Customize the ProblemDetail response
         final HttpStatusCode status = getHttpStatusCodeFromSystemException(e);
-        ProblemDetail problemDetail = createProblemDetail(e, status);
+        final ProblemDetail problemDetail = createProblemDetail(e, status);
 
         problemDetail.setTitle("System Error");
         problemDetail.setDetail(e.getDetail());

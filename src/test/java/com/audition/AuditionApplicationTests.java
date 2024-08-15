@@ -13,13 +13,13 @@ import org.springframework.core.env.Environment;
 class AuditionApplicationTests {
 
     @Autowired
-    private AuditionService auditionService;
+    private transient AuditionService auditionService;
 
     @Autowired
-    private AuditionController auditionController;
+    private transient AuditionController auditionController;
 
     @Autowired
-    private Environment env;
+    private transient Environment env;
 
     @Test
     void contextLoads() {
@@ -30,8 +30,8 @@ class AuditionApplicationTests {
     @Test
     void testPropertyLoading() {
         // Verify that the spring.application.name property is correctly loaded
-        String expectedValue = "audition-api";
-        String actualValue = env.getProperty("spring.application.name");
+        final String expectedValue = "audition-api";
+        final String actualValue = env.getProperty("spring.application.name");
         assertThat(actualValue).isEqualTo(expectedValue);
     }
 }

@@ -12,26 +12,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.client.HttpClientErrorException;
 
-import java.lang.reflect.Field;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ExceptionControllerAdviceTest {
 
-    private MeterRegistry meterRegistry;
-    private Counter counter;
-    private AuditionLogger auditionLogger;
-    private ExceptionControllerAdvice exceptionControllerAdvice;
-    private Logger mockLogger;
+    private transient MeterRegistry meterRegistry;
+    private transient Counter counter;
+    private transient AuditionLogger auditionLogger;
+    private transient ExceptionControllerAdvice exceptionControllerAdvice;
 
     @BeforeEach
     void setUp() throws Exception {
         meterRegistry = Mockito.mock(MeterRegistry.class);
         counter = Mockito.mock(Counter.class);
         auditionLogger = Mockito.mock(AuditionLogger.class);
-        mockLogger = Mockito.mock(Logger.class);
 
         // Mock the counter to be returned by the meterRegistry
         when(meterRegistry.counter(anyString(), anyString(), anyString())).thenReturn(counter);
@@ -39,21 +40,16 @@ class ExceptionControllerAdviceTest {
         // Instantiate the class under test
         exceptionControllerAdvice = new ExceptionControllerAdvice();
 
-        // Set the private fields using reflection
-        Field meterRegistryField = ExceptionControllerAdvice.class.getDeclaredField("meterRegistry");
-        meterRegistryField.setAccessible(true);
-        meterRegistryField.set(exceptionControllerAdvice, meterRegistry);
-
-        Field loggerField = ExceptionControllerAdvice.class.getDeclaredField("logger");
-        loggerField.setAccessible(true);
-        loggerField.set(exceptionControllerAdvice, auditionLogger);
+        // Set the private fields using ReflectionTestUtils
+        ReflectionTestUtils.setField(exceptionControllerAdvice, "meterRegistry", meterRegistry);
+        ReflectionTestUtils.setField(exceptionControllerAdvice, "logger", auditionLogger);
     }
 
     @Test
     void testHandleHttpClientException() {
-        HttpClientErrorException exception = new HttpClientErrorException(HttpStatus.NOT_FOUND, "Not Found");
+        final HttpClientErrorException exception = new HttpClientErrorException(HttpStatus.NOT_FOUND, "Not Found");
 
-        ProblemDetail problemDetail = exceptionControllerAdvice.handleHttpClientException(exception);
+        final ProblemDetail problemDetail = exceptionControllerAdvice.handleHttpClientException(exception);
 
         assertEquals(HttpStatus.NOT_FOUND.value(), problemDetail.getStatus());
         assertEquals("404 Not Found", problemDetail.getDetail());
@@ -63,9 +59,9 @@ class ExceptionControllerAdviceTest {
 
     @Test
     void testHandleMainException() {
-        Exception exception = new Exception("General error");
+        final Exception exception = new Exception("General error");
 
-        ProblemDetail problemDetail = exceptionControllerAdvice.handleMainException(exception);
+        final ProblemDetail problemDetail = exceptionControllerAdvice.handleMainException(exception);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), problemDetail.getStatus());
         assertEquals("General error", problemDetail.getDetail());
@@ -76,9 +72,9 @@ class ExceptionControllerAdviceTest {
 
     @Test
     void testHandleSystemException() {
-        SystemException exception = new SystemException("System error", "System Error", 500);
+        final SystemException exception = new SystemException("System error", "System Error", 500);
 
-        ProblemDetail problemDetail = exceptionControllerAdvice.handleSystemException(exception);
+        final ProblemDetail problemDetail = exceptionControllerAdvice.handleSystemException(exception);
 
         assertEquals(500, problemDetail.getStatus());
         assertEquals("System error", problemDetail.getDetail());

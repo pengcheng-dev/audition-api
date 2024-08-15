@@ -3,7 +3,6 @@ package com.audition.integration;
 import com.audition.common.exception.SystemException;
 import com.audition.model.AuditionPost;
 import com.audition.model.Comment;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,53 +11,57 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 
 class AuditionIntegrationClientTest {
 
-    private RestTemplate restTemplate;
+    private transient RestTemplate restTemplate;
 
-    private AuditionIntegrationClient auditionIntegrationClient;
+    private transient AuditionIntegrationClient auditionIntegrationClient;
 
     @BeforeEach
-    void setUp() throws Exception{
+    void setUp() throws Exception {
         restTemplate = Mockito.mock(RestTemplate.class);
         auditionIntegrationClient = new AuditionIntegrationClient();
 
-        // Use reflection to set the restTemplate field
-        Field restTemplateField = AuditionIntegrationClient.class.getDeclaredField("restTemplate");
-        restTemplateField.setAccessible(true);
-        restTemplateField.set(auditionIntegrationClient, restTemplate);
+        // Set the private field 'restTemplate' using ReflectionTestUtils
+        ReflectionTestUtils.setField(auditionIntegrationClient, "restTemplate", restTemplate);
     }
 
     @Test
     void testGetPosts() {
-        List<AuditionPost> mockPosts = List.of(new AuditionPost());
+        final List<AuditionPost> mockPosts = List.of(new AuditionPost());
+        final ParameterizedTypeReference<List<AuditionPost>> responseType = new ParameterizedTypeReference<List<AuditionPost>>() {};
         Mockito.when(restTemplate.exchange(
             eq("https://jsonplaceholder.typicode.com/posts"),
             eq(HttpMethod.GET),
             isNull(),
-            any(ParameterizedTypeReference.class))
+            eq(responseType))
         ).thenReturn(ResponseEntity.ok(mockPosts));
 
-        List<AuditionPost> posts = auditionIntegrationClient.getPosts();
+        final List<AuditionPost> posts = auditionIntegrationClient.getPosts();
         assertNotNull(posts);
         assertEquals(1, posts.size());
     }
 
     @Test
     void testGetPostsHttpClientErrorException() {
+        final ParameterizedTypeReference<List<AuditionPost>> responseType = new ParameterizedTypeReference<List<AuditionPost>>() {};
         Mockito.when(restTemplate.exchange(
             eq("https://jsonplaceholder.typicode.com/posts"),
             eq(HttpMethod.GET),
             isNull(),
-            any(ParameterizedTypeReference.class))
+            eq(responseType))
         ).thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(404), "test exception"));
 
         assertThrows(SystemException.class, () -> auditionIntegrationClient.getPosts());
@@ -66,11 +69,11 @@ class AuditionIntegrationClientTest {
 
     @Test
     void testGetPostById() {
-        AuditionPost mockPost = new AuditionPost();
+        final AuditionPost mockPost = new AuditionPost();
         Mockito.when(restTemplate.getForObject("https://jsonplaceholder.typicode.com/posts/1", AuditionPost.class))
             .thenReturn(mockPost);
 
-        AuditionPost post = auditionIntegrationClient.getPostById(1);
+        final AuditionPost post = auditionIntegrationClient.getPostById(1);
         assertNotNull(post);
     }
 
@@ -83,56 +86,66 @@ class AuditionIntegrationClientTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testGetPostWithCommentsById() {
-        AuditionPost mockPost = new AuditionPost();
-        Comment comment = new Comment();
+        final Comment comment = new Comment();
         comment.setId(1);
         comment.setPostId(1);
         comment.setBody("test body");
-        List<Comment> mockComments = new ArrayList<>();
+        final List<Comment> mockComments = new ArrayList<>();
         mockComments.add(comment);
-        ResponseEntity<List<Comment>> mockResponseEntity = ResponseEntity.ok(mockComments);
-        System.out.println(mockResponseEntity.getBody());
+        final ResponseEntity<List<Comment>> mockResponseEntity = ResponseEntity.ok(mockComments);
+
+        final AuditionPost post = new AuditionPost();
+        post.setId(1);
+        post.setTitle("test title");
+        post.setBody("any test body");
 
         Mockito.when(restTemplate.getForObject("https://jsonplaceholder.typicode.com/posts/1", AuditionPost.class))
-            .thenReturn(mockPost);
+            .thenReturn(post);
 
         // Mock RestTemplate call
+        final ParameterizedTypeReference<List<Comment>> responseType = new ParameterizedTypeReference<List<Comment>>() {};
         Mockito.when(restTemplate.exchange(
             eq("https://jsonplaceholder.typicode.com/posts/1/comments"),
             eq(HttpMethod.GET),
             eq(null),
-            any(ParameterizedTypeReference.class))
+            eq(responseType))
         ).thenReturn(mockResponseEntity);
 
         // Call the method under test
-        List<Comment> comments = auditionIntegrationClient.getCommentsByPostId(1);
+        final AuditionPost resltPost = auditionIntegrationClient.getPostWithCommentsById(1);
+        assertNotNull(resltPost);
+        assertEquals(1, resltPost.getComments().size());
+        assertEquals(1, resltPost.getComments().get(0).getId());
     }
 
     @Test
     void testGetCommentsByPostId() {
-        List<Comment> mockComments = List.of(new Comment());
-        ResponseEntity<List<Comment>> responseEntity = ResponseEntity.ok(mockComments);
+        final List<Comment> mockComments = List.of(new Comment());
+        final ResponseEntity<List<Comment>> responseEntity = ResponseEntity.ok(mockComments);
 
+        final ParameterizedTypeReference<List<Comment>> responseType = new ParameterizedTypeReference<List<Comment>>() {};
         Mockito.when(restTemplate.exchange(
             eq("https://jsonplaceholder.typicode.com/posts/1/comments"),
             eq(HttpMethod.GET),
             isNull(),
-            any(ParameterizedTypeReference.class))
+            eq(responseType))
         ).thenReturn(responseEntity);
 
-        List<Comment> comments = auditionIntegrationClient.getCommentsByPostId(1);
+        final List<Comment> comments = auditionIntegrationClient.getCommentsByPostId(1);
         assertNotNull(comments);
         assertEquals(1, comments.size());
     }
 
     @Test
     void testGetCommentsByPostIdHttpClientErrorException() {
+        final ParameterizedTypeReference<List<Comment>> responseType = new ParameterizedTypeReference<List<Comment>>() {};
         Mockito.when(restTemplate.exchange(
             eq("https://jsonplaceholder.typicode.com/posts/1/comments"),
             eq(HttpMethod.GET),
             isNull(),
-            any(ParameterizedTypeReference.class))
+            eq(responseType))
         ).thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(404), "test exception"));
 
         assertThrows(SystemException.class, () -> auditionIntegrationClient.getCommentsByPostId(1));

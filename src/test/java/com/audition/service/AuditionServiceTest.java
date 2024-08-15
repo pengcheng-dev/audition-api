@@ -5,14 +5,16 @@ import com.audition.model.AuditionPost;
 import com.audition.model.Comment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,10 +25,10 @@ import static org.mockito.Mockito.when;
 class AuditionServiceTest {
 
     @MockBean
-    private AuditionIntegrationClient auditionIntegrationClient;
+    private transient AuditionIntegrationClient auditionIntegrationClient;
 
     @Autowired
-    private AuditionService auditionService;
+    private transient AuditionService auditionService;
 
     @BeforeEach
     void setUp() {
@@ -34,51 +36,51 @@ class AuditionServiceTest {
 
     @Test
     void testGetPosts() {
-        List<AuditionPost> mockPosts = List.of(new AuditionPost());
+        final List<AuditionPost> mockPosts = List.of(new AuditionPost());
         when(auditionIntegrationClient.getPosts()).thenReturn(mockPosts);
 
-        List<AuditionPost> posts = auditionService.getPosts();
+        final List<AuditionPost> posts = auditionService.getPosts();
         assertNotNull(posts);
         assertEquals(1, posts.size());
     }
 
     @Test
     void testGetPostById() {
-        AuditionPost mockPost = new AuditionPost();
+        final AuditionPost mockPost = new AuditionPost();
         when(auditionIntegrationClient.getPostById(1)).thenReturn(mockPost);
 
-        AuditionPost post = auditionService.getPostById(1);
+        final AuditionPost post = auditionService.getPostById(1);
         assertNotNull(post);
     }
 
     @Test
     void testGetCommentsByPostId() {
-        List<Comment> mockComments = List.of(new Comment());
+        final List<Comment> mockComments = List.of(new Comment());
         when(auditionIntegrationClient.getCommentsByPostId(1)).thenReturn(mockComments);
 
-        List<Comment> comments = auditionService.getCommentsByPostId(1);
+        final List<Comment> comments = auditionService.getCommentsByPostId(1);
         assertNotNull(comments);
         assertEquals(1, comments.size());
     }
 
     @Test
-    void testGetPostWithCommentsById_ValidId() {
+    void testGetPostWithCommentsByValidId() {
         // Arrange
-        AuditionPost mockPost = new AuditionPost();
+        final AuditionPost mockPost = new AuditionPost();
         mockPost.setId(1);
 
-        Comment mockComment = new Comment();
+        final Comment mockComment = new Comment();
         mockComment.setPostId(1);
         mockComment.setId(1);
         mockComment.setBody("Test comment");
 
-        List<Comment> mockComments = List.of(mockComment);
+        final List<Comment> mockComments = List.of(mockComment);
 
         when(auditionIntegrationClient.getPostById(1)).thenReturn(mockPost);
         when(auditionIntegrationClient.getCommentsByPostId(1)).thenReturn(mockComments);
 
         // Act
-        AuditionPost result = auditionService.getPostWithCommentsById(1);
+        final AuditionPost result = auditionService.getPostWithCommentsById(1);
 
         // Assert
         assertNotNull(result);
@@ -93,9 +95,9 @@ class AuditionServiceTest {
     }
 
     @Test
-    void testGetPostWithCommentsById_NegativeId() {
+    void testGetPostWithCommentsByNegativeId() {
         // Arrange & Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             auditionService.getPostWithCommentsById(-1);
         });
 
@@ -107,12 +109,12 @@ class AuditionServiceTest {
     }
 
     @Test
-    void testGetPostWithCommentsById_PostNotFound() {
+    void testGetPostWithCommentsByIdReturnPostNotFound() {
         // Arrange
         when(auditionIntegrationClient.getPostById(1)).thenReturn(null);
 
         // Act
-        AuditionPost result = auditionService.getPostWithCommentsById(1);
+        final AuditionPost result = auditionService.getPostWithCommentsById(1);
 
         // Assert
         assertNull(result);

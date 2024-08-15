@@ -1,5 +1,11 @@
 package com.audition.common.logging;
 
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.net.URI;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,13 +14,15 @@ import org.slf4j.Logger;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ProblemDetail;
 
-import static org.mockito.Mockito.*;
-
 @SpringBootTest
+@SuppressWarnings("PMD.LoggerIsNotStaticFinal")
 class AuditionLoggerTest {
 
-    private AuditionLogger auditionLogger;
-    private Logger mockLogger;
+    private transient AuditionLogger auditionLogger;
+    private  transient Logger mockLogger;
+
+    private static final String TEST_MESSAGE = "Test message";
+    private static final String ERROR_MESSAGE = "Error message";
 
     @BeforeEach
     void setUp() {
@@ -25,8 +33,8 @@ class AuditionLoggerTest {
     @Test
     void testInfoWithMessage() {
         when(mockLogger.isInfoEnabled()).thenReturn(true);
-        auditionLogger.info(mockLogger, "Test message");
-        verify(mockLogger, times(1)).info("Test message");
+        auditionLogger.info(mockLogger, TEST_MESSAGE);
+        verify(mockLogger, times(1)).info(TEST_MESSAGE);
     }
 
     @Test
@@ -53,26 +61,26 @@ class AuditionLoggerTest {
     @Test
     void testErrorWithMessage() {
         when(mockLogger.isErrorEnabled()).thenReturn(true);
-        auditionLogger.error(mockLogger, "Error message");
-        verify(mockLogger, times(1)).error("Error message");
+        auditionLogger.error(mockLogger, ERROR_MESSAGE);
+        verify(mockLogger, times(1)).error(ERROR_MESSAGE);
     }
 
     @Test
     void testLogErrorWithException() {
-        Exception exception = new RuntimeException("Test exception");
+        final Exception exception = new RuntimeException("Test exception");
         when(mockLogger.isErrorEnabled()).thenReturn(true);
-        auditionLogger.logErrorWithException(mockLogger, "Error message", exception);
-        verify(mockLogger, times(1)).error("Error message", exception);
+        auditionLogger.logErrorWithException(mockLogger, ERROR_MESSAGE, exception);
+        verify(mockLogger, times(1)).error(ERROR_MESSAGE, exception);
     }
 
     @Test
     void testLogStandardProblemDetail() {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(500);
+        final ProblemDetail problemDetail = ProblemDetail.forStatus(500);
         problemDetail.setTitle("Test Title");
         problemDetail.setDetail("Test Detail");
         problemDetail.setInstance(URI.create("/test-instance"));
 
-        Exception exception = new RuntimeException("Test exception");
+        final Exception exception = new RuntimeException("Test exception");
         when(mockLogger.isErrorEnabled()).thenReturn(true);
         auditionLogger.logStandardProblemDetail(mockLogger, problemDetail, exception);
 

@@ -1,6 +1,9 @@
 package com.audition.web;
 
-import com.audition.common.logging.AuditionLogger;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.audition.model.AuditionPost;
 import com.audition.model.Comment;
 import com.audition.service.AuditionService;
@@ -13,39 +16,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class AuditionControllerTest {
 
     @MockBean
-    private AuditionService auditionService;
-
-    @MockBean
-    private AuditionLogger logger;
+    private transient AuditionService auditionService;
 
     @Autowired
-    private AuditionController auditionController;
+    private transient AuditionController auditionController;
 
     @BeforeEach
     void setUp() {
-        List<AuditionPost> mockPosts = List.of(new AuditionPost());
+        final List<AuditionPost> mockPosts = List.of(new AuditionPost());
         Mockito.when(auditionService.getPosts()).thenReturn(mockPosts);
     }
 
     @Test
     void testGetPosts() {
-        List<AuditionPost> posts = auditionController.getPosts(null);
+        final List<AuditionPost> posts = auditionController.getPosts(null);
         assertNotNull(posts);
         assertEquals(1, posts.size());
     }
 
     @Test
     void testGetPost() {
-        AuditionPost mockPost = new AuditionPost();
+        final AuditionPost mockPost = new AuditionPost();
         Mockito.when(auditionService.getPostById(1)).thenReturn(mockPost);
 
-        AuditionPost post = auditionController.getPost("1");
+        final AuditionPost post = auditionController.getPost("1");
         assertNotNull(post);
     }
 
@@ -57,10 +56,10 @@ class AuditionControllerTest {
 
     @Test
     void testGetCommentsByPostId() {
-        List<Comment> mockComments = List.of(new Comment());
+        final List<Comment> mockComments = List.of(new Comment());
         Mockito.when(auditionService.getCommentsByPostId(1)).thenReturn(mockComments);
 
-        List<Comment> comments = auditionController.getCommentsByPostId("1");
+        final List<Comment> comments = auditionController.getCommentsByPostId("1");
         assertNotNull(comments);
         assertEquals(1, comments.size());
     }

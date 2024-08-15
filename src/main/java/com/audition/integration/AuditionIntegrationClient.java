@@ -11,28 +11,30 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * proxy class for rest template
+ * proxy class for rest template.
  */
 @Component
+@SuppressWarnings("PMD.AvoidCatchingGenericException")
 public class AuditionIntegrationClient {
 
 
     @Autowired
-    private RestTemplate restTemplate;
+    private transient RestTemplate restTemplate;
 
-    private final String POST_REST_URL = "https://jsonplaceholder.typicode.com/posts";
+    private static final String POST_REST_URL = "https://jsonplaceholder.typicode.com/posts";
 
     /**
-     * fetch all posts
+     * Fetch all posts.
      *
      * @return List of AuditionPost
      */
     public List<AuditionPost> getPosts() {
         try {
-            ResponseEntity<List<AuditionPost>> response = restTemplate.exchange(
+            final ResponseEntity<List<AuditionPost>> response = restTemplate.exchange(
                 POST_REST_URL,
                 HttpMethod.GET,
                 null,
@@ -41,23 +43,26 @@ public class AuditionIntegrationClient {
             return response.getBody();
         } catch (HttpClientErrorException e) {
             throw new SystemException("Failed to retrieve posts", e.getStatusCode().value(), e);
+        } catch (ResourceAccessException e) {
+            throw new SystemException("Failed to retrieve posts due to network issues", e);
         } catch (Exception e) {
+            // As a last resort, catch any other exceptions that haven't been caught by specific ones
             throw new SystemException("An unexpected error occurred while retrieving posts", e);
         }
     }
 
     /**
-     * fetch post by a dedicated id
+     * fetch post by a dedicated id.
      *
      * @param id used to fetch post
      * @return AuditionPost
      */
-    public AuditionPost getPostById(int id) {
+    public AuditionPost getPostById(final int id) {
         try {
             return restTemplate.getForObject(POST_REST_URL + "/" + id, AuditionPost.class);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new SystemException("Cannot find a Post with id " + id, "Resource Not Found", 404);
+                throw new SystemException("Cannot find a Post with id " + id, "Resource Not Found", 404, e);
             } else {
                 throw new SystemException(e.getResponseBodyAsString(), e.getStatusCode().value(), e);
             }
@@ -67,27 +72,28 @@ public class AuditionIntegrationClient {
     }
 
     /**
-     * fetch post by id and filled with comments, service layer has provided this service
+     * fetch post by id and filled with comments, service layer has provided this service.
+     *
      * @param postId used to fetch post and comments of this post
      * @return AuditionPost filled with comments
      */
     @Deprecated
-    public AuditionPost getPostWithCommentsById(int postId) {
+    public AuditionPost getPostWithCommentsById(final int postId) {
         try {
             // Fetch the post
-            AuditionPost post = restTemplate.getForObject(POST_REST_URL + "/" + postId,
+            final AuditionPost post = restTemplate.getForObject(POST_REST_URL + "/" + postId,
                 AuditionPost.class);
 
             // Fetch the comments for the post
             if (post != null) {
-                List<Comment> comments = getCommentsByPostId(post.getId());
+                final List<Comment> comments = getCommentsByPostId(post.getId());
                 // Set comments to the post
                 post.setComments(comments);
             }
             return post;
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new SystemException("Cannot find a Post with id " + postId, "Resource Not Found", 404);
+                throw new SystemException("Cannot find a Post with id " + postId, "Resource Not Found", 404, e);
             } else {
                 throw new SystemException(e.getResponseBodyAsString(), e.getStatusCode().value(), e);
             }
@@ -97,15 +103,14 @@ public class AuditionIntegrationClient {
     }
 
     /**
-     * fetch a comment list of a dedicated post by id
+     * fetch a comment list of a dedicated post by id.
      *
      * @param postId used to fetch comments of a dedicated post by id
      * @return List of comment of a post
      */
-    public List<Comment> getCommentsByPostId(int postId) {
-
+    public List<Comment> getCommentsByPostId(final int postId) {
         try {
-            ResponseEntity<List<Comment>> response = restTemplate.exchange(
+            final ResponseEntity<List<Comment>> response = restTemplate.exchange(
                 POST_REST_URL + "/" + postId + "/comments",
                 HttpMethod.GET,
                 null,
@@ -114,7 +119,7 @@ public class AuditionIntegrationClient {
             return response.getBody();
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new SystemException("Cannot find comments for Post with id " + postId, "Resource Not Found", 404);
+                throw new SystemException("Cannot find comments for Post with id " + postId, "Resource Not Found", 404, e);
             } else {
                 throw new SystemException(e.getResponseBodyAsString(), e.getStatusCode().value(), e);
             }

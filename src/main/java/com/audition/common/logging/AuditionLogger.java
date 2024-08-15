@@ -58,7 +58,7 @@ public class AuditionLogger {
     }
 
     private String createStandardProblemDetailMessage(final ProblemDetail standardProblemDetail) {
-        StringBuilder message = new StringBuilder();
+        final StringBuilder message = new StringBuilder();
 
         if (standardProblemDetail.getStatus() > 0) {
             message.append("Status: ").append(standardProblemDetail.getStatus()).append(" - ");

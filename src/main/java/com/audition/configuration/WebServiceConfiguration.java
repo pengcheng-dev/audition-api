@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,26 +30,27 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebServiceConfiguration.class);
     @Autowired
-    private AuditionLogger logger;
+    private transient AuditionLogger logger;
 
     @Autowired
-    private ResponseHeaderInjector responseHeaderInjector;
+    private transient ResponseHeaderInjector responseHeaderInjector;
 
     @Autowired
-    private ResponseMetricsInjector responseMetricsInjector;
+    private transient ResponseMetricsInjector responseMetricsInjector;
 
     @Autowired
-    private RequestLoggingInjector requestLoggingInjector;
+    private transient RequestLoggingInjector requestLoggingInjector;
 
     /**
      * Add three injectors for a request, including:
      * 1. response header injector to return tracing info to client
      * 2. request logging injector to log request and response info
      * 3. metrics to record application key metrics
+     *
      * @param registry metrics registry
      */
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
+    public void addInterceptors(final InterceptorRegistry registry) {
         registry.addInterceptor(responseHeaderInjector);
         registry.addInterceptor(requestLoggingInjector);
         registry.addInterceptor(responseMetricsInjector);
@@ -61,13 +63,14 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
      * 3. maps to camelCase
      * 4. Does not include null values or empty values
      * 5. does not write datas as timestamps.
+     *
      * @return ObjectMapper
      */
     @Bean
     public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
+        final ObjectMapper mapper = new ObjectMapper();
 
-        mapper.setDateFormat(new SimpleDateFormat(YEAR_MONTH_DAY_PATTERN));
+        mapper.setDateFormat(new SimpleDateFormat(YEAR_MONTH_DAY_PATTERN, Locale.getDefault()));
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -78,14 +81,15 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
     }
 
     /**
-     * create a logging interceptor that logs request/response for rest template calls.
+     * Create a logging interceptor that logs request/response for rest template calls.
+     *
      * @return RestTemplate
      */
     @Bean
     public RestTemplate restTemplate() {
         final RestTemplate restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(createClientFactory()));
 
-        MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter();
+        final MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter();
         messageConverter.setObjectMapper(objectMapper());
         restTemplate.getMessageConverters().add(0, messageConverter);
 
@@ -95,26 +99,28 @@ public class WebServiceConfiguration implements WebMvcConfigurer {
     }
 
     /**
-     * Add request and response info to and from a rest template call
+     * Add request and response info to and from a rest template call.
+     *
      * @return ClientHttpRequestInterceptor
      */
     @Bean
+    @SuppressWarnings("PMD.GuardLogStatement")
     public ClientHttpRequestInterceptor loggingInterceptor() {
         return (request, body, execution) -> {
 
-            StringBuilder logMessage = new StringBuilder();
+            final StringBuilder logMessage = new StringBuilder(1024);
 
-            logMessage.append("Request URI: ").append(request.getURI()).append("\n")
-                .append("Request Method: ").append(request.getMethod()).append("\n")
-                .append("Request Body: ").append(new String(body, Charset.defaultCharset())).append("\n");
+            logMessage.append("Request URI: ").append(request.getURI())
+                .append("\nRequest Method: ").append(request.getMethod())
+                .append("\nRequest Body: ").append(new String(body, Charset.defaultCharset())).append('\n');
 
             logger.info(LOG, logMessage.toString());
 
-            var response = execution.execute(request, body);
+            final var response = execution.execute(request, body);
 
             logMessage.setLength(0); // Clear the StringBuilder for reuse
-            logMessage.append("Response Status Code: ").append(response.getStatusCode()).append("\n")
-                .append("Response Body: ").append(new String(response.getBody().readAllBytes(), Charset.defaultCharset())).append("\n");
+            logMessage.append("Response Status Code: ").append(response.getStatusCode())
+                .append("\nResponse Body: ").append(new String(response.getBody().readAllBytes(), Charset.defaultCharset())).append('\n');
 
             logger.info(LOG, logMessage.toString());
 

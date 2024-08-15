@@ -8,33 +8,37 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
-import java.lang.reflect.Field;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ResponseMetricsInjectorTest {
 
-    private MeterRegistry meterRegistry;
-    private Counter totalRequestsCounter;
-    private Counter errorCounter;
-    private Timer.Sample timerSample;
-    private HttpServletRequest request;
-    private HttpServletResponse response;
-    private ResponseMetricsInjector responseMetricsInjector;
+    private transient MeterRegistry meterRegistry;
+    private transient Counter totalRequestsCounter;
+    private transient Counter errorCounter;
+    private transient Timer.Sample timerSample;
+    private transient HttpServletRequest request;
+    private transient HttpServletResponse response;
+    private transient ResponseMetricsInjector responseMetricsInjector;
 
     @BeforeEach
     void setUp() throws Exception {
-        meterRegistry = Mockito.mock(MeterRegistry.class);
-        totalRequestsCounter = Mockito.mock(Counter.class);
-        errorCounter = Mockito.mock(Counter.class);
-        timerSample = Mockito.mock(Timer.Sample.class);
-        request = Mockito.mock(HttpServletRequest.class);
-        response = Mockito.mock(HttpServletResponse.class);
+        meterRegistry = mock(MeterRegistry.class);
+        totalRequestsCounter = mock(Counter.class);
+        errorCounter = mock(Counter.class);
+        timerSample = mock(Timer.Sample.class);
+        request = mock(HttpServletRequest.class);
+        response = mock(HttpServletResponse.class);
 
         // Create an instance of ResponseMetricsInjector
         responseMetricsInjector = new ResponseMetricsInjector(meterRegistry);
@@ -44,10 +48,8 @@ class ResponseMetricsInjectorTest {
         setPrivateField(responseMetricsInjector, "errorCounter", errorCounter);
     }
 
-    private void setPrivateField(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
+    private void setPrivateField(final Object target, final String fieldName, final Object value) throws NoSuchFieldException, IllegalAccessException {
+        ReflectionTestUtils.setField(target, fieldName, value);
     }
 
     @Test
@@ -56,7 +58,11 @@ class ResponseMetricsInjectorTest {
             // Mock the static Timer.start method
             mockedTimer.when(() -> Timer.start(meterRegistry)).thenReturn(timerSample);
 
-            boolean result = responseMetricsInjector.preHandle(request, response, null);
+            // Replace null with a valid Object
+            final Object handler = new Object();
+            final boolean result = responseMetricsInjector.preHandle(request, response, handler);
+
+            assertTrue(result);
 
             // Verify that Timer.start(meterRegistry) was called
             mockedTimer.verify(() -> Timer.start(eq(meterRegistry)));
@@ -66,13 +72,11 @@ class ResponseMetricsInjectorTest {
 
             // Verify that the totalRequestsCounter was incremented
             verify(totalRequestsCounter).increment();
-
-            assertTrue(result);
         }
     }
 
     @Test
-    void testAfterCompletion_Success() {
+    void testAfterCompletionSuccess() {
         // Setup request and response
         when(request.getAttribute("timerSample")).thenReturn(timerSample);
         when(response.getStatus()).thenReturn(200);
@@ -83,13 +87,15 @@ class ResponseMetricsInjectorTest {
         when(response.getStatus()).thenReturn(200);
 
         try (MockedStatic<Timer> mockedTimer = mockStatic(Timer.class)) {
-            Timer.Builder timerBuilder = mock(Timer.Builder.class);
+            final Timer.Builder timerBuilder = mock(Timer.Builder.class);
             when(Timer.builder("http.server.requests")).thenReturn(timerBuilder);
             when(timerBuilder.tag(anyString(), anyString())).thenReturn(timerBuilder);
             when(timerBuilder.description(anyString())).thenReturn(timerBuilder);
             when(timerBuilder.register(meterRegistry)).thenReturn(mock(Timer.class));
 
-            responseMetricsInjector.afterCompletion(request, response, null, null);
+            // Replace null with a valid Object
+            final Object handler = new Object();
+            responseMetricsInjector.afterCompletion(request, response, handler, null);
 
             // Verify that the timer sample was stopped
             verify(timerSample).stop(any(Timer.class));
@@ -100,7 +106,7 @@ class ResponseMetricsInjectorTest {
     }
 
     @Test
-    void testAfterCompletion_Error() {
+    void testAfterCompletionError() {
         // Setup request and response
         when(request.getAttribute("timerSample")).thenReturn(timerSample);
         when(response.getStatus()).thenReturn(500);
@@ -111,13 +117,15 @@ class ResponseMetricsInjectorTest {
         when(response.getStatus()).thenReturn(200);
 
         try (MockedStatic<Timer> mockedTimer = mockStatic(Timer.class)) {
-            Timer.Builder timerBuilder = mock(Timer.Builder.class);
+            final Timer.Builder timerBuilder = mock(Timer.Builder.class);
             when(Timer.builder("http.server.requests")).thenReturn(timerBuilder);
             when(timerBuilder.tag(anyString(), anyString())).thenReturn(timerBuilder);
             when(timerBuilder.description(anyString())).thenReturn(timerBuilder);
             when(timerBuilder.register(meterRegistry)).thenReturn(mock(Timer.class));
 
-            responseMetricsInjector.afterCompletion(request, response, null, new Exception("Test Exception"));
+            // Replace null with a valid Object
+            final Object handler = new Object();
+            responseMetricsInjector.afterCompletion(request, response, handler, new Exception("Test Exception"));
 
             // Verify that the timer sample was stopped
             verify(timerSample).stop(any(Timer.class));

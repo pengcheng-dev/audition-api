@@ -9,20 +9,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Add incoming request count, error count and timer for each request
+ * Add incoming request count, error count and timer for each request.
  */
 @Component
 public class ResponseMetricsInjector implements HandlerInterceptor {
 
-    private final MeterRegistry meterRegistry;
-    private final Counter totalRequestsCounter;
-    private final Counter errorCounter;
+    private final transient MeterRegistry meterRegistry;
+    private final transient Counter totalRequestsCounter;
+    private final transient Counter errorCounter;
 
     /**
-     * Initialize counters and register to registry
+     * Initialize counters and register to registry.
+     *
      * @param meterRegistry MeterRegistry
      */
-    public ResponseMetricsInjector(MeterRegistry meterRegistry) {
+    public ResponseMetricsInjector(final MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
 
         // Initialize counters
@@ -36,16 +37,17 @@ public class ResponseMetricsInjector implements HandlerInterceptor {
     }
 
     /**
-     * start timer and request counter increment
+     * Start timer and request counter increment.
+     *
      * @param request  HttpServletRequest
      * @param response HttpServletResponse
      * @param handler  Not used
      * @return true
      */
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler) {
         // Start timer for request processing time
-        Timer.Sample sample = Timer.start(meterRegistry);
+        final Timer.Sample sample = Timer.start(meterRegistry);
         request.setAttribute("timerSample", sample);
 
         // Increment the total request counter
@@ -55,17 +57,18 @@ public class ResponseMetricsInjector implements HandlerInterceptor {
     }
 
     /**
-     * register timer and error counter increment if exception happened
+     * Register timer and error counter increment if exception happened.
+     *
      * @param request  HttpServletRequest
      * @param response HttpServletResponse
      * @param handler  Not used
      * @param ex exception
      */
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
-        Exception ex) {
+    public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response, final Object handler,
+        final Exception ex) {
         // Record the request processing time using Micrometer
-        Timer.Sample sample = (Timer.Sample) request.getAttribute("timerSample");
+        final Timer.Sample sample = (Timer.Sample) request.getAttribute("timerSample");
         if (sample != null) {
             sample.stop(Timer.builder("http.server.requests")
                 .tag("method", request.getMethod())

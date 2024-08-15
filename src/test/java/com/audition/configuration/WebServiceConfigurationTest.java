@@ -1,6 +1,5 @@
 package com.audition.configuration;
 
-import com.audition.common.logging.AuditionLogger;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -17,35 +16,36 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 
 @SpringBootTest
 class WebServiceConfigurationTest {
 
     @Autowired
-    private WebServiceConfiguration webServiceConfiguration;
+    private transient WebServiceConfiguration webServiceConfiguration;
 
     @MockBean
-    private ResponseHeaderInjector responseHeaderInjector;
+    private transient ResponseHeaderInjector responseHeaderInjector;
 
     @MockBean
-    private RequestLoggingInjector requestLoggingInjector;
+    private transient RequestLoggingInjector requestLoggingInjector;
 
     @MockBean
-    private ResponseMetricsInjector responseMetricsInjector;
-
-    @MockBean
-    private AuditionLogger logger;
+    private transient ResponseMetricsInjector responseMetricsInjector;
 
     @BeforeEach
     void setUp() {
-        //webServiceConfiguration.logger = logger;
     }
 
     @Test
     void testAddInterceptors() {
-        InterceptorRegistry mockRegistry = Mockito.mock(InterceptorRegistry.class);
+        final InterceptorRegistry mockRegistry = Mockito.mock(InterceptorRegistry.class);
 
         webServiceConfiguration.addInterceptors(mockRegistry);
 
@@ -56,7 +56,7 @@ class WebServiceConfigurationTest {
 
     @Test
     void testObjectMapper() {
-        ObjectMapper objectMapper = webServiceConfiguration.objectMapper();
+        final ObjectMapper objectMapper = webServiceConfiguration.objectMapper();
 
         assertNotNull(objectMapper);
         assertEquals("yyyy-MM-dd", ((SimpleDateFormat) objectMapper.getDateFormat()).toPattern());
@@ -67,7 +67,7 @@ class WebServiceConfigurationTest {
 
     @Test
     void testRestTemplate() {
-        RestTemplate restTemplate = webServiceConfiguration.restTemplate();
+        final RestTemplate restTemplate = webServiceConfiguration.restTemplate();
 
         assertNotNull(restTemplate);
         assertTrue(restTemplate.getMessageConverters().get(0) instanceof MappingJackson2HttpMessageConverter);
@@ -77,7 +77,7 @@ class WebServiceConfigurationTest {
 
     @Test
     void testLoggingInterceptor() {
-        ClientHttpRequestInterceptor interceptor = webServiceConfiguration.loggingInterceptor();
+        final ClientHttpRequestInterceptor interceptor = webServiceConfiguration.loggingInterceptor();
         assertNotNull(interceptor);
     }
 }
