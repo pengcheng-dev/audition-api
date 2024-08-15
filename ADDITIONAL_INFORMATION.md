@@ -80,6 +80,7 @@ curl -X GET "http://localhost:8080/posts" -H "accept: application/json"
 - Libraries of OpenTelemetry are using alpha versions, which may contain hidden bugs.
 - Tracing info needs to be exported to other tools like Jaeger.
 - Request info logged is not comprehensive, and the response info logged may include sensitive data, introducing a security risk.
+- CORS Issues may happen if calling from cross-origin.
 
 ## Future Enhancements
 
